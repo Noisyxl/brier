@@ -30,7 +30,7 @@
 
 Ask a panel one question with a resolution date and the exact test that will settle it. Every answer is a
 probability, sealed into a hash chain the moment it is given. Weeks later a resolver reads one number from
-one source, applies the test the question was born with, and the arithmetic begins.
+one source, applies the test the question was born with, and the arithmetic begins
 
 Then the number nobody publishes:
 
