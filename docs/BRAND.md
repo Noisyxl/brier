@@ -16,23 +16,25 @@ Every command comes from the same world: `ask`, `seal`, `pending`, `settle`, `sc
 
 ## The mark
 
-A reliability diagram at its smallest: a diagonal reference line, two dots that landed on the truth, and one
-that did not. The miss is the only thing in it with colour.
+**Σ** — the summation sign, in yellow on black. Every number this tool prints is a sum over settled
+forecasts: the Brier score is a mean of squares, the decomposition is a weighted sum over bins, the
+calibration diagram is a count. The mark is the operation.
 
-It has to read at 40 px in a list of repositories, so there is nothing else in it.
+It carries no diagram and no ornament, so it reads at 40 px in a list of repositories, which is the size that
+matters.
 
 ## Palette
 
 | Token | Hex | Where |
 |---|---|---|
-| `ground` | `#0D1117` | every surface |
-| `panel` | `#161B22` | panels on the ground |
-| `line` | `#2E3643` | every hairline, and the reference line in the diagram |
-| `text` | `#E8E3D9` | probabilities, names, headline numbers |
-| `muted` | `#8B94A3` | labels, reasons, footnotes |
-| `accent` | `#E4572E` | **a miss, and nothing else** |
+| `ground` | `#000000` | every surface |
+| `panel` | `#0D0D0D` | panels on the ground |
+| `line` | `#2C2C2C` | every hairline, and the reference line in the diagram |
+| `text` | `#E9E9E4` | probabilities, names, headline numbers |
+| `muted` | `#8A8A82` | labels, reasons, footnotes |
+| `accent` | `#FFE10A` | **a miss, and nothing else** |
 
-**Vermilion marks a miss. Being right is unmarked.**
+**Yellow marks a miss. Being right is unmarked.**
 
 Colour appears on a bin that sits away from the reference line, an overconfidence gap above five points,
 negative skill, a refused question, and the heading of whatever you are reading. It never appears on a good
@@ -68,7 +70,9 @@ Nothing in `assets/` is drawn by hand or screenshotted from a design tool.
 
 | File | Made by |
 |---|---|
-| `icon.png`, `banner.png` | `python assets/render.py` — the SVGs through headless Chromium at 2× |
-| `score.png`, `calibrate.png`, `panel.png`, `refused.png` | `python assets/term2png.py <capture>.txt <out>.png` — the bytes the program actually wrote, repainted in the palette |
+| `icon.png`, `banner.png` | supplied artwork — the wordmark and the mark, the only two images here that were designed rather than generated |
+| `score.png`, `calibrate.png`, `panel.png`, `refused.png` | `python assets/term2png.py <capture>.txt <out>.png` — **the bytes the program actually wrote**, repainted in the palette |
 
-A palette change is one edit to `design-tokens.json`, one to the three files that mirror it, and one command.
+No terminal image in this README was screenshotted by hand. Each one is a captured transcript of the real
+command, so the numbers in the pictures are the numbers the tool prints and a palette change regenerates
+every one of them from `design-tokens.json` plus the two files that mirror it.

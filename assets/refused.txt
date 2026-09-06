@@ -1,5 +1,5 @@
 [1G[0K
-  [48;2;228;87;46m[38;2;13;17;23m REFUSED [0m resolution.test
+  [48;2;255;225;10m[38;2;0;0;0m REFUSED [0m resolution.test
   cannot read the test "goes up". Use one of: gte N · lte N · gt N · lt N · eq N · neq N · between LO HI
 
 [1G[0K\[1G[0K

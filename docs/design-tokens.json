@@ -1,21 +1,21 @@
 {
   "version": "brier-1",
   "name": "brier",
-  "note": "A reliability diagram at night: a dark ground, bone type, and one vermilion that appears only where a forecast missed. Every value here appears verbatim in src/util/fmt.ts, assets/*.svg and assets/term2png.py — there is no second palette in the repository.",
+  "note": "Black ground, bone type, and one yellow that appears only where a forecast missed. Every value here appears verbatim in src/util/fmt.ts and assets/term2png.py — there is no second palette in the repository.",
 
   "colors": {
-    "ground": "#0D1117",
-    "panel": "#161B22",
-    "sunk": "#1C2230",
-    "line": "#2E3643",
-    "text": "#E8E3D9",
-    "muted": "#8B94A3",
-    "accent": "#E4572E",
-    "on-accent": "#0D1117"
+    "ground": "#000000",
+    "panel": "#0D0D0D",
+    "sunk": "#141414",
+    "line": "#2C2C2C",
+    "text": "#E9E9E4",
+    "muted": "#8A8A82",
+    "accent": "#FFE10A",
+    "on-accent": "#000000"
   },
 
   "chroma_rule": {
-    "statement": "Vermilion marks a miss. Being right is unmarked.",
+    "statement": "Yellow marks a miss. Being right is unmarked.",
     "accent_is_for": [
       "a forecast whose bin sits away from the reference line",
       "an overconfidence gap above five points",

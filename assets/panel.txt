@@ -1,19 +1,19 @@
-[1G[0K\[1G[0K
-  [38;2;228;87;46mpanel[0m
+[1G[0K
+  [38;2;255;225;10mpanel[0m
 
-  grok-4.1                 [38;2;139;148;163mmodel · no key, will not answer[0m
-  claude-sonnet-4-5        [38;2;139;148;163mmodel · no key, will not answer[0m
-  claude-opus-4-5          [38;2;139;148;163mmodel · no key, will not answer[0m
+  grok-4.1                 [38;2;138;138;130mmodel · no key, will not answer[0m
+  claude-sonnet-4-5        [38;2;138;138;130mmodel · no key, will not answer[0m
+  claude-opus-4-5          [38;2;138;138;130mmodel · no key, will not answer[0m
 
-  [38;2;228;87;46moffline[0m  [38;2;139;148;163mno key, no network, not models — four named failure modes[0m
-  hedgehog                 [38;2;139;148;163mone big idea, held loudly; near 0.9 or 0.1 and right about half the time[0m
-  fox                      [38;2;139;148;163mmany small updates; stays between 0.35 and 0.75 and is quietly well calibrated[0m
-  parrot                   [38;2;139;148;163msays the base rate every time; never wrong in an interesting way, never useful[0m
-  drunk                    [38;2;139;148;163muniform noise; the floor anything worth running has to clear[0m
+  [38;2;255;225;10moffline[0m  [38;2;138;138;130mno key, no network, not models — four named failure modes[0m
+  hedgehog                 [38;2;138;138;130mone big idea, held loudly; near 0.9 or 0.1 and right about half the time[0m
+  fox                      [38;2;138;138;130mmany small updates; stays between 0.35 and 0.75 and is quietly well calibrated[0m
+  parrot                   [38;2;138;138;130msays the base rate every time; never wrong in an interesting way, never useful[0m
+  drunk                    [38;2;138;138;130muniform noise; the floor anything worth running has to clear[0m
 
-  [38;2;228;87;46mbaselines[0m  [38;2;139;148;163mscored on every set, automatically[0m
-  coin                     [38;2;139;148;163m0.5 on everything; Brier 0.25 by construction[0m
-  base                     [38;2;139;148;163mthe question's own base rate[0m
-  always-yes               [38;2;139;148;163m0.99 on everything; catches a question mix that flatters[0m
-  always-no                [38;2;139;148;163m0.01 on everything; the same, in reverse[0m
+  [38;2;255;225;10mbaselines[0m  [38;2;138;138;130mscored on every set, automatically[0m
+  coin                     [38;2;138;138;130m0.5 on everything; Brier 0.25 by construction[0m
+  base                     [38;2;138;138;130mthe question's own base rate[0m
+  always-yes               [38;2;138;138;130m0.99 on everything; catches a question mix that flatters[0m
+  always-no                [38;2;138;138;130m0.01 on everything; the same, in reverse[0m
 [1G[0K\[1G[0K

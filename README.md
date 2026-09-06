@@ -6,12 +6,12 @@
 </p>
 
 <p align="center">
-  <img alt="tests" src="https://img.shields.io/badge/tests-66%20passing-E4572E?style=flat-square&labelColor=0D1117">
-  <img alt="node" src="https://img.shields.io/badge/node-%E2%89%A520-E8E3D9?style=flat-square&labelColor=0D1117">
-  <img alt="runtime deps" src="https://img.shields.io/badge/runtime%20deps-1-E8E3D9?style=flat-square&labelColor=0D1117">
-  <img alt="network" src="https://img.shields.io/badge/offline-by%20default-E8E3D9?style=flat-square&labelColor=0D1117">
-  <img alt="scoring" src="https://img.shields.io/badge/scoring-proper%20rules-E8E3D9?style=flat-square&labelColor=0D1117">
-  <img alt="license" src="https://img.shields.io/badge/license-MIT-E4572E?style=flat-square&labelColor=0D1117">
+  <img alt="tests" src="https://img.shields.io/badge/tests-66%20passing-FFE10A?style=flat-square&labelColor=000000">
+  <img alt="node" src="https://img.shields.io/badge/node-%E2%89%A520-E9E9E4?style=flat-square&labelColor=000000">
+  <img alt="runtime deps" src="https://img.shields.io/badge/runtime%20deps-1-E9E9E4?style=flat-square&labelColor=000000">
+  <img alt="network" src="https://img.shields.io/badge/offline-by%20default-E9E9E4?style=flat-square&labelColor=000000">
+  <img alt="scoring" src="https://img.shields.io/badge/scoring-proper%20rules-E9E9E4?style=flat-square&labelColor=000000">
+  <img alt="license" src="https://img.shields.io/badge/license-MIT-FFE10A?style=flat-square&labelColor=000000">
 </p>
 
 <p align="center">

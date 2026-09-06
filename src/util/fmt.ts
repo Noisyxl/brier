@@ -2,11 +2,11 @@
 
 const C = {
   reset: "\x1b[0m",
-  text: "\x1b[38;2;232;227;217m",
-  muted: "\x1b[38;2;139;148;163m",
-  accent: "\x1b[38;2;228;87;46m",
-  onAccent: "\x1b[48;2;228;87;46m\x1b[38;2;13;17;23m",
-  line: "\x1b[38;2;46;54;67m",
+  text: "\x1b[38;2;233;233;228m",
+  muted: "\x1b[38;2;138;138;130m",
+  accent: "\x1b[38;2;255;225;10m",
+  onAccent: "\x1b[48;2;255;225;10m\x1b[38;2;0;0;0m",
+  line: "\x1b[38;2;44;44;44m",
 } as const;
 
 const plain = (): boolean => process.env.NO_COLOR !== undefined || !process.stdout.isTTY;

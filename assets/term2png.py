@@ -28,10 +28,10 @@ FONT = (
     "href='https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap'>"
 )
 
-PAPER = "#0D1117"
-PANEL = "#161B22"
-LINE = "#2E3643"
-INK = "#E8E3D9"
+PAPER = "#000000"
+PANEL = "#0D0D0D"
+LINE = "#2C2C2C"
+INK = "#E9E9E4"
 
 # The 24-bit colours util/fmt.ts emits, mapped to names for the CSS below.
 TRUECOLOR = re.compile(r"38;2;(\d+);(\d+);(\d+)")
@@ -85,7 +85,7 @@ def page(body: str, title: str) -> str:
       html,body{{margin:0;background:{PAPER};font-family:'JetBrains Mono',ui-monospace,monospace}}
       .frame{{margin:24px;border:1px solid {LINE};background:{PANEL}}}
       .bar{{display:flex;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid {LINE};
-            color:#8B94A3;font-size:12px;letter-spacing:2px;text-transform:uppercase}}
+            color:#8A8A82;font-size:12px;letter-spacing:2px;text-transform:uppercase}}
       .dot{{width:8px;height:8px;border-radius:50%;background:{LINE}}}
       pre{{margin:0;padding:16px 18px;color:{INK};font-size:13px;line-height:1.5;white-space:pre;
            overflow:hidden;font-variant-numeric:tabular-nums}}
