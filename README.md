@@ -60,6 +60,50 @@ brier demo && brier score
 
 ---
 
+## Watch it run
+
+<p align="center">
+  <img src="./assets/process.gif" alt="the brier instrument panel running: three questions walked through ask, seal, wait, settle and score, then the rest of the run settling and the verdict" width="100%">
+</p>
+
+<p align="center">
+  <sub>Three records through the loop, then two hundred. Full length, full resolution:
+  <a href="./assets/process.mp4">assets/process.mp4</a> &middot; the page itself:
+  <a href="./assets/process.html">assets/process.html</a></sub>
+</p>
+
+Five stations and a hash chain. A question is **asked** only if a rule can settle it, every answer is
+**sealed** before the answer exists, the ledger **waits** — the step that cannot be optimised away — a
+resolver **settles** it by reading one number from one source, and only then is anything **scored**.
+
+<p align="center">
+  <img src="./assets/process-loop.png" alt="one real record mid-flight: the question, four sealed probabilities with their chain links, the settlement reading, and the resulting Brier scores" width="100%">
+</p>
+
+One real record, mid-flight: the question with the test it was born with, four probabilities and the chain
+link each one actually received, the number the resolver read, and what that answer cost.
+
+<p align="center">
+  <img src="./assets/process.png" alt="the panel at the end of the run: calibration gauges, the gap between stated confidence and realised accuracy, the scoreboard, and the reliability diagram" width="100%">
+</p>
+
+Every figure on that panel is read out of a settled ledger by `scripts/viz.ts` — the needles, the running
+curves, the scoreboard, the chain head. Nothing on it is typed in by hand, which is the only reason it is
+worth looking at: **the picture cannot flatter the tool.** Rebuild all of it from the file:
+
+```sh
+brier demo -n 200 --seed 1950   # the ledger the panel reads
+npm run viz                     # assets/viz-data.json → assets/process.html
+npm run viz:shot                # the stills above
+npm run viz:video               # the recording above (needs ffmpeg)
+```
+
+The two lines worth staring at are in the middle panel. The white one is the confidence the loudest
+forecaster stated; the yellow one is how often the side it took actually won. Two hundred questions in,
+they have not met.
+
+---
+
 ## Install
 
 Node 20 or newer. One runtime dependency. Nothing below needs an API key.
@@ -219,7 +263,9 @@ Three properties are enforced in code rather than requested in a prompt, each wi
 - **the resolver cannot see any forecast, and the scorer cannot see the resolver** — settlement is a pure
   function of (source, test), fixed before any answer existed
 
-[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md).
+[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), and the same loop with live instruments in
+[assets/process.html](./assets/process.html) — open it in a browser, or read
+[docs/VISUALIZATION.md](./docs/VISUALIZATION.md) for how it is built.
 
 ## Numbers behind the defaults
 

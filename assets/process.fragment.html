@@ -1,0 +1,902 @@
+<title>The Brier Loop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --ground: #000000;
+    --panel:  #0D0D0D;
+    --sunk:   #141414;
+    --line:   #2C2C2C;
+    --text:   #E9E9E4;
+    --muted:  #8A8A82;
+    --accent: #FFE10A;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stage {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 26px 30px 22px;
+  }
+
+  .muted  { color: var(--muted); }
+  .mark   { color: var(--accent); }
+  .num    { font-variant-numeric: tabular-nums; }
+
+  /* ── header ──────────────────────────────────────────────────────────── */
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 16px;
+  }
+
+  .wordmark {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    line-height: 1;
+    margin: 0;
+  }
+  .wordmark .sigma { color: var(--accent); }
+
+  .tagline { color: var(--muted); margin-top: 8px; font-size: 12px; letter-spacing: 0.04em; }
+
+  .chainbar { text-align: right; font-size: 12px; color: var(--muted); }
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+  .clock { color: var(--text); }
+
+  /* ── grid ────────────────────────────────────────────────────────────── */
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+    gap: 18px;
+    margin-top: 18px;
+  }
+  .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 16px 18px 18px;
+    min-width: 0;
+  }
+
+  .cap {
+    font-size: 10px;
+    letter-spacing: 0.20em;
+    color: var(--muted);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .cap b { color: var(--text); font-weight: 400; letter-spacing: 0.20em; }
+
+  /* ── the rail ────────────────────────────────────────────────────────── */
+
+  .rail { position: relative; padding: 4px 0 2px; }
+  .railline {
+    position: absolute;
+    left: 5%; right: 5%;
+    top: 11px;
+    height: 1px;
+    background: var(--line);
+  }
+  .railfill {
+    position: absolute;
+    left: 5%;
+    top: 11px;
+    height: 1px;
+    background: var(--accent);
+    width: 0;
+    transition: width .45s cubic-bezier(.4,0,.2,1);
+  }
+  .stations { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); }
+  .station { text-align: center; }
+  .dot {
+    width: 9px; height: 9px;
+    margin: 7px auto 0;
+    border: 1px solid var(--line);
+    background: var(--ground);
+    transform: rotate(45deg);
+    transition: background .2s, border-color .2s, box-shadow .2s;
+  }
+  .station.on .dot { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255,225,10,.10); }
+  .station.done .dot { background: var(--line); border-color: var(--line); }
+  .station .name {
+    margin-top: 10px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    transition: color .2s;
+  }
+  .station.on .name { color: var(--accent); }
+  .station.done .name { color: var(--text); }
+  .station .sub { font-size: 10px; color: var(--line); margin-top: 3px; line-height: 1.35; }
+  .station.on .sub, .station.done .sub { color: var(--muted); }
+
+  /* ── the record ──────────────────────────────────────────────────────── */
+
+  .record { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; min-height: 236px; }
+
+  .qhead { display: flex; justify-content: space-between; gap: 16px; font-size: 11px; color: var(--muted); }
+  .qtext { margin: 8px 0 6px; font-size: 15px; line-height: 1.45; }
+  .qmeta { font-size: 11px; color: var(--muted); }
+  .qmeta span { color: var(--text); }
+
+  table.seals { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 12px; }
+  table.seals td { padding: 4px 0; border-bottom: 1px solid var(--sunk); vertical-align: baseline; }
+  table.seals tr { opacity: 0; transform: translateY(3px); transition: opacity .25s, transform .25s; }
+  table.seals tr.in { opacity: 1; transform: none; }
+  table.seals td.who { width: 84px; color: var(--text); padding-right: 10px; white-space: nowrap; }
+  table.seals td.p   { width: 62px; text-align: right; padding-right: 18px; white-space: nowrap; }
+  table.seals td.why { color: var(--muted); }
+  table.seals td.seal { width: 96px; text-align: right; color: #3E3E38; font-size: 11px; padding-left: 14px; white-space: nowrap; }
+  table.seals td.res  { width: 78px; text-align: right; font-size: 11px; padding-left: 12px; white-space: nowrap; }
+
+  .line-settle, .line-score {
+    margin-top: 12px; font-size: 12px;
+    opacity: 0; transition: opacity .3s;
+  }
+  .line-settle.in, .line-score.in { opacity: 1; }
+  .tag {
+    display: inline-block; border: 1px solid var(--line); color: var(--muted);
+    padding: 0 6px; font-size: 10px; letter-spacing: .16em; margin-right: 10px;
+  }
+  .yes { color: var(--text); }
+  .no  { color: var(--text); }
+
+  /* ── scoreboard ──────────────────────────────────────────────────────── */
+
+  table.board { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.board th {
+    font-size: 10px; letter-spacing: .14em; color: var(--muted);
+    text-align: left; font-weight: 400; padding-bottom: 8px; text-transform: uppercase;
+  }
+  table.board th.r, table.board td.r { text-align: right; }
+  table.board td { padding: 4px 0; border-top: 1px solid var(--sunk); }
+  table.board td.r { padding-left: 14px; }
+  table.board tr.base td { color: var(--muted); }
+  table.board tr.lead td:first-child { color: var(--accent); }
+
+  /* ── refusals ────────────────────────────────────────────────────────── */
+
+  ul.refuse { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+  ul.refuse li { padding: 6px 0 6px 22px; border-top: 1px solid var(--sunk); position: relative; color: var(--muted); }
+  ul.refuse li:first-child { border-top: 0; }
+  ul.refuse li::before { content: "✕"; position: absolute; left: 0; color: var(--accent); }
+  ul.refuse b { color: var(--text); font-weight: 400; }
+
+  .counters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .counter .v { font-size: 22px; line-height: 1.1; }
+  .counter .k { font-size: 10px; letter-spacing: .16em; color: var(--muted); margin-top: 5px; text-transform: uppercase; }
+
+  /* ── gauges ──────────────────────────────────────────────────────────── */
+
+  .gauges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .gauge { text-align: center; min-width: 0; }
+  .gauge svg { display: block; width: 100%; height: auto; }
+  .gauge .g-k { font-size: 10px; letter-spacing: .16em; color: var(--muted); text-transform: uppercase; }
+  .gauge .g-s { font-size: 10px; color: #55554F; margin-top: 5px; line-height: 1.45; min-height: 42px; }
+
+  /* ── charts ──────────────────────────────────────────────────────────── */
+
+  .chart svg { display: block; width: 100%; height: auto; }
+  .legend { display: flex; gap: 18px; font-size: 11px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 14px; height: 0; border-top: 2px solid currentColor; vertical-align: middle; margin-right: 6px; }
+
+  .note { font-size: 11px; color: var(--muted); margin-top: 10px; }
+
+  /* ── reliability ─────────────────────────────────────────────────────── */
+
+  table.rel { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.rel th { font-size: 10px; letter-spacing: .14em; color: var(--muted); text-align: left; font-weight: 400; padding-bottom: 8px; text-transform: uppercase; }
+  table.rel td { padding: 5px 0; border-top: 1px solid var(--sunk); vertical-align: middle; }
+  table.rel .r-n { color: var(--muted); text-align: right; width: 42px; padding-right: 14px; }
+  table.rel .r-bar { width: 46%; }
+  table.rel .r-note { text-align: right; font-size: 11px; color: var(--muted); white-space: nowrap; }
+  table.rel svg { display: block; width: 100%; height: 16px; }
+
+  /* ── footer ──────────────────────────────────────────────────────────── */
+
+  footer {
+    margin-top: 18px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .verdict { font-size: 15px; }
+  .verdict .big { font-size: 19px; letter-spacing: .01em; }
+  .cmd { font-size: 12px; color: var(--muted); }
+  .cmd code { color: var(--text); background: var(--sunk); border: 1px solid var(--line); padding: 2px 7px; }
+
+  @media (max-width: 1080px) {
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    .gauges { grid-template-columns: repeat(2, 1fr); }
+    .station .sub { display: none; }
+  }
+  @media (max-width: 620px) {
+    .stage { padding: 18px 14px; }
+    .counters { grid-template-columns: repeat(2, 1fr); }
+    td.why, td.seal { display: none; }
+  }
+</style>
+
+<div class="stage">
+
+  <header>
+    <div>
+      <h1 class="wordmark">BRIER<span class="sigma">.</span></h1>
+      <div class="tagline" id="tagline"></div>
+    </div>
+    <div class="chainbar">
+      <span class="badge" id="chainstate">SEALED</span>
+      <div style="margin-top:8px" id="chainline"></div>
+      <div style="margin-top:2px">elapsed <span class="clock num" id="clock">00:00</span></div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ══ left column: the loop, one real record at a time ══ -->
+    <div class="col">
+      <section class="card">
+        <div class="cap"><b>THE LOOP</b><span id="loopstate">one question, end to end</span></div>
+
+        <div class="rail">
+          <div class="railline"></div>
+          <div class="railfill" id="railfill"></div>
+          <div class="stations" id="stations"></div>
+        </div>
+
+        <div class="record">
+          <div class="qhead">
+            <span id="qid" class="muted"></span>
+            <span id="qdates" class="muted"></span>
+          </div>
+          <div class="qtext" id="qtext">&nbsp;</div>
+          <div class="qmeta" id="qmeta"></div>
+
+          <table class="seals"><tbody id="seals"></tbody></table>
+
+          <div class="line-settle" id="settleline"></div>
+          <div class="line-score" id="scoreline"></div>
+        </div>
+
+        <div class="counters" id="counters"></div>
+      </section>
+
+      <section class="card">
+        <div class="cap"><b>SCOREBOARD</b><span id="boardcap"></span></div>
+        <table class="board"><thead><tr>
+          <th>forecaster</th><th class="r">brier</th><th class="r">log</th>
+          <th class="r">said</th><th class="r">right</th><th class="r">gap</th><th class="r">skill</th>
+        </tr></thead><tbody id="board"></tbody></table>
+        <div class="note" id="boardnote"></div>
+      </section>
+
+      <section class="card">
+        <div class="cap"><b>WHAT THE LEDGER REFUSES</b><span>enforced in code, not in a policy</span></div>
+        <ul class="refuse" id="refuse"></ul>
+      </section>
+    </div>
+
+    <!-- ══ right column: instruments ══ -->
+    <div class="col">
+
+      <section class="card">
+        <div class="cap"><b>INSTRUMENTS</b><span id="instcap"></span></div>
+        <div class="gauges" id="gauges"></div>
+      </section>
+
+      <section class="card chart">
+        <div class="cap"><b>WHAT IT SAID · WHAT HAPPENED</b><span id="growthstate"></span></div>
+        <svg id="gap" viewBox="0 0 620 180" preserveAspectRatio="none" aria-label="stated confidence against realised accuracy"></svg>
+        <div class="legend">
+          <span style="color:var(--text)"><i></i>stated confidence</span>
+          <span style="color:var(--accent)"><i></i>how often that side won</span>
+          <span class="muted">the band between them is the gap</span>
+        </div>
+        <div class="note" id="gapnote"></div>
+      </section>
+
+      <section class="card chart">
+        <div class="cap"><b>RUNNING BRIER</b><span>lower is better · 0.25 is a coin</span></div>
+        <svg id="run" viewBox="0 0 620 150" preserveAspectRatio="none" aria-label="running Brier score by question"></svg>
+        <div class="legend" id="runlegend"></div>
+      </section>
+
+      <section class="card">
+        <div class="cap"><b>RELIABILITY</b><span id="relcap"></span></div>
+        <table class="rel">
+          <thead><tr><th>stated</th><th>observed</th><th class="r-n">n</th><th class="r-bar">0% &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100%</th><th class="r-note">drift</th></tr></thead>
+          <tbody id="rel"></tbody>
+        </table>
+        <div class="note">│ stated · ● observed · a dot left of the line is a claim the world did not pay</div>
+      </section>
+
+    </div>
+  </div>
+
+  <footer>
+    <div class="verdict" id="verdict">&nbsp;</div>
+    <div class="cmd">reproduce · <code>npx brier demo -n 200 --seed 1950 &amp;&amp; npx brier score</code></div>
+  </footer>
+
+</div>
+
+<script>
+const DATA = {"seed":1950,"questions":200,"records":1200,"head":"5d3b33de13de1b87d5b1c80626400bb65934a33ae5adf1735a678db273d4a1f1","intact":true,"panel":["drunk","fox","hedgehog","parrot"],"baselines":["always-no","always-yes","base","coin"],"panelists":[{"panelist":"always-no","n":200,"brier":0.4901,"log":2.3076,"meanConfidence":0.99,"accuracy":0.5,"gap":0.49,"skillPct":-132.87,"ece":0.49,"bins":[{"bucket":0.05,"n":200,"stated":0.01,"observed":0.5}]},{"panelist":"always-yes","n":200,"brier":0.4901,"log":2.3076,"meanConfidence":0.99,"accuracy":0.5,"gap":0.49,"skillPct":-132.87,"ece":0.49,"bins":[{"bucket":0.95,"n":200,"stated":0.99,"observed":0.5}]},{"panelist":"base","n":200,"brier":0.2105,"log":0.6098,"meanConfidence":0.6528,"accuracy":0.68,"gap":-0.0272,"skillPct":0,"ece":0.044,"bins":[{"bucket":0.15,"n":3,"stated":0.191,"observed":0},{"bucket":0.25,"n":24,"stated":0.2567,"observed":0.25},{"bucket":0.35,"n":51,"stated":0.3487,"observed":0.3529},{"bucket":0.45,"n":32,"stated":0.4525,"observed":0.4063},{"bucket":0.55,"n":18,"stated":0.532,"observed":0.5556},{"bucket":0.65,"n":38,"stated":0.6442,"observed":0.7105},{"bucket":0.75,"n":31,"stated":0.7429,"observed":0.8065},{"bucket":0.85,"n":3,"stated":0.8217,"observed":0.3333}],"curve":[{"n":1,"brier":0.4058,"said":0.637,"right":0,"ece":0.637},{"n":2,"brier":0.2317,"said":0.6985,"right":0.5,"ece":0.4385},{"n":3,"brier":0.2773,"said":0.668,"right":0.3333,"ece":0.4947},{"n":4,"brier":0.2995,"said":0.6522,"right":0.25,"ece":0.5222},{"n":5,"brier":0.2866,"said":0.6248,"right":0.4,"ece":0.5148},{"n":6,"brier":0.3207,"said":0.6375,"right":0.3333,"ece":0.5458},{"n":7,"brier":0.287,"said":0.6477,"right":0.4286,"ece":0.5094},{"n":8,"brier":0.2895,"said":0.636,"right":0.375,"ece":0.3937},{"n":9,"brier":0.3072,"said":0.6398,"right":0.3333,"ece":0.4244},{"n":10,"brier":0.3002,"said":0.6271,"right":0.4,"ece":0.4307},{"n":11,"brier":0.2837,"said":0.6296,"right":0.4545,"ece":0.3602},{"n":12,"brier":0.2645,"said":0.6413,"right":0.5,"ece":0.3109},{"n":13,"brier":0.2551,"said":0.6399,"right":0.5385,"ece":0.2581},{"n":14,"brier":0.246,"said":0.6401,"right":0.5714,"ece":0.2141},{"n":15,"brier":0.2623,"said":0.6441,"right":0.5333,"ece":0.2465},{"n":16,"brier":0.2512,"said":0.6481,"right":0.5625,"ece":0.2492},{"n":17,"brier":0.242,"said":0.6506,"right":0.5882,"ece":0.2164},{"n":18,"brier":0.2322,"said":0.6558,"right":0.6111,"ece":0.2187},{"n":19,"brier":0.2229,"said":0.6615,"right":0.6316,"ece":0.2196},{"n":20,"brier":0.2151,"said":0.6655,"right":0.65,"ece":0.1957},{"n":21,"brier":0.2079,"said":0.6695,"right":0.6667,"ece":0.1744},{"n":22,"brier":0.2006,"said":0.6747,"right":0.6818,"ece":0.1567},{"n":23,"brier":0.2011,"said":0.6687,"right":0.6957,"ece":0.1639},{"n":24,"brier":0.1953,"said":0.6723,"right":0.7083,"ece":0.1469},{"n":25,"brier":0.19,"said":0.6753,"right":0.72,"ece":0.1352},{"n":26,"brier":0.1859,"said":0.6767,"right":0.7308,"ece":0.1411},{"n":27,"brier":0.1949,"said":0.6759,"right":0.7037,"ece":0.1602},{"n":28,"brier":0.1931,"said":0.6739,"right":0.7143,"ece":0.1481},{"n":29,"brier":0.2042,"said":0.6754,"right":0.6897,"ece":0.1182},{"n":30,"brier":0.2017,"said":0.6742,"right":0.7,"ece":0.1262},{"n":31,"brier":0.1967,"said":0.6778,"right":0.7097,"ece":0.1291},{"n":32,"brier":0.1928,"said":0.6794,"right":0.7188,"ece":0.1336},{"n":33,"brier":0.2002,"said":0.6788,"right":0.697,"ece":0.1495},{"n":34,"brier":0.2051,"said":0.6766,"right":0.6765,"ece":0.1358},{"n":35,"brier":0.2055,"said":0.6725,"right":0.6857,"ece":0.1454},{"n":36,"brier":0.2035,"said":0.6714,"right":0.6944,"ece":0.1312},{"n":37,"brier":0.2013,"said":0.6709,"right":0.7027,"ece":0.1292},{"n":38,"brier":0.2028,"said":0.6666,"right":0.6842,"ece":0.1124},{"n":39,"brier":0.2076,"said":0.6655,"right":0.6667,"ece":0.1256},{"n":40,"brier":0.2154,"said":0.6669,"right":0.65,"ece":0.1044},{"n":41,"brier":0.2135,"said":0.6659,"right":0.6585,"ece":0.0928},{"n":42,"brier":0.2099,"said":0.6679,"right":0.6667,"ece":0.0966},{"n":43,"brier":0.207,"said":0.6689,"right":0.6744,"ece":0.101},{"n":44,"brier":0.2052,"said":0.6683,"right":0.6818,"ece":0.0905},{"n":45,"brier":0.2041,"said":0.6669,"right":0.6889,"ece":0.0798},{"n":46,"brier":0.2027,"said":0.666,"right":0.6957,"ece":0.0863},{"n":47,"brier":0.2007,"said":0.6661,"right":0.7021,"ece":0.0914},{"n":48,"brier":0.201,"said":0.6634,"right":0.7083,"ece":0.0992},{"n":49,"brier":0.1985,"said":0.6647,"right":0.7143,"ece":0.1027},{"n":50,"brier":0.2014,"said":0.6631,"right":0.7,"ece":0.089},{"n":51,"brier":0.2021,"said":0.6601,"right":0.7059,"ece":0.0968},{"n":52,"brier":0.1995,"said":0.6616,"right":0.7115,"ece":0.1},{"n":53,"brier":0.2007,"said":0.6588,"right":0.6981,"ece":0.0894},{"n":54,"brier":0.2018,"said":0.6561,"right":0.6852,"ece":0.0972},{"n":55,"brier":0.2054,"said":0.6556,"right":0.6727,"ece":0.0839},{"n":56,"brier":0.2116,"said":0.6572,"right":0.6607,"ece":0.0692},{"n":57,"brier":0.2093,"said":0.6582,"right":0.6667,"ece":0.0729},{"n":58,"brier":0.2076,"said":0.6583,"right":0.6724,"ece":0.0659},{"n":59,"brier":0.2109,"said":0.6579,"right":0.661,"ece":0.0662},{"n":60,"brier":0.2092,"said":0.6581,"right":0.6667,"ece":0.0596},{"n":61,"brier":0.2074,"said":0.6585,"right":0.6721,"ece":0.0535},{"n":62,"brier":0.2093,"said":0.6571,"right":0.6613,"ece":0.0618},{"n":63,"brier":0.209,"said":0.6556,"right":0.6667,"ece":0.0678},{"n":64,"brier":0.2067,"said":0.6571,"right":0.6719,"ece":0.0706},{"n":65,"brier":0.2057,"said":0.6566,"right":0.6769,"ece":0.0744},{"n":66,"brier":0.2043,"said":0.6567,"right":0.6818,"ece":0.0682},{"n":67,"brier":0.2032,"said":0.6565,"right":0.6866,"ece":0.0725},{"n":68,"brier":0.2008,"said":0.6585,"right":0.6912,"ece":0.0745},{"n":69,"brier":0.2009,"said":0.6568,"right":0.6957,"ece":0.0801},{"n":70,"brier":0.2061,"said":0.6581,"right":0.6857,"ece":0.0713},{"n":71,"brier":0.2054,"said":0.6573,"right":0.6901,"ece":0.067},{"n":72,"brier":0.2085,"said":0.6573,"right":0.6806,"ece":0.0729},{"n":73,"brier":0.2071,"said":0.6576,"right":0.6849,"ece":0.0763},{"n":74,"brier":0.2077,"said":0.6555,"right":0.6892,"ece":0.0821},{"n":75,"brier":0.2062,"said":0.6558,"right":0.6933,"ece":0.0767},{"n":76,"brier":0.2066,"said":0.654,"right":0.6974,"ece":0.0693},{"n":77,"brier":0.2046,"said":0.6555,"right":0.7013,"ece":0.0713},{"n":78,"brier":0.2026,"said":0.6572,"right":0.7051,"ece":0.0732},{"n":79,"brier":0.2034,"said":0.6554,"right":0.6962,"ece":0.0788},{"n":80,"brier":0.206,"said":0.6552,"right":0.6875,"ece":0.0858},{"n":81,"brier":0.2047,"said":0.6554,"right":0.6914,"ece":0.0808},{"n":82,"brier":0.2034,"said":0.6559,"right":0.6951,"ece":0.076},{"n":83,"brier":0.2024,"said":0.6559,"right":0.6988,"ece":0.0728},{"n":84,"brier":0.2014,"said":0.6559,"right":0.7024,"ece":0.0761},{"n":85,"brier":0.2043,"said":0.656,"right":0.6941,"ece":0.0812},{"n":86,"brier":0.2079,"said":0.6567,"right":0.686,"ece":0.0886},{"n":87,"brier":0.2067,"said":0.6569,"right":0.6897,"ece":0.0913},{"n":88,"brier":0.2059,"said":0.6566,"right":0.6932,"ece":0.0945},{"n":89,"brier":0.2052,"said":0.6562,"right":0.6966,"ece":0.0976},{"n":90,"brier":0.2047,"said":0.6556,"right":0.7,"ece":0.1011},{"n":91,"brier":0.2055,"said":0.6541,"right":0.6923,"ece":0.0942},{"n":92,"brier":0.2041,"said":0.6548,"right":0.6957,"ece":0.0963},{"n":93,"brier":0.2045,"said":0.6532,"right":0.6989,"ece":0.1005},{"n":94,"brier":0.2072,"said":0.6534,"right":0.6915,"ece":0.0922},{"n":95,"brier":0.209,"said":0.653,"right":0.6842,"ece":0.0977},{"n":96,"brier":0.208,"said":0.6531,"right":0.6875,"ece":0.1002},{"n":97,"brier":0.207,"said":0.6532,"right":0.6907,"ece":0.0957},{"n":98,"brier":0.2084,"said":0.6525,"right":0.6837,"ece":0.1007},{"n":99,"brier":0.2085,"said":0.6513,"right":0.6869,"ece":0.095},{"n":100,"brier":0.2092,"said":0.6501,"right":0.68,"ece":0.0888},{"n":101,"brier":0.2083,"said":0.65,"right":0.6832,"ece":0.0914},{"n":102,"brier":0.2067,"said":0.6516,"right":0.6863,"ece":0.0924},{"n":103,"brier":0.2063,"said":0.651,"right":0.6893,"ece":0.0954},{"n":104,"brier":0.2049,"said":0.6519,"right":0.6923,"ece":0.097},{"n":105,"brier":0.2043,"said":0.6517,"right":0.6952,"ece":0.0926},{"n":106,"brier":0.2052,"said":0.6507,"right":0.6887,"ece":0.0865},{"n":107,"brier":0.2046,"said":0.6506,"right":0.6916,"ece":0.0891},{"n":108,"brier":0.2041,"said":0.6501,"right":0.6944,"ece":0.092},{"n":109,"brier":0.2031,"said":0.6506,"right":0.6972,"ece":0.0883},{"n":110,"brier":0.2054,"said":0.6508,"right":0.6909,"ece":0.0937},{"n":111,"brier":0.2076,"said":0.6509,"right":0.6847,"ece":0.0989},{"n":112,"brier":0.207,"said":0.6508,"right":0.6875,"ece":0.0947},{"n":113,"brier":0.2075,"said":0.6496,"right":0.6814,"ece":0.0984},{"n":114,"brier":0.2065,"said":0.65,"right":0.6842,"ece":0.1003},{"n":115,"brier":0.2056,"said":0.6502,"right":0.687,"ece":0.0966},{"n":116,"brier":0.2045,"said":0.6509,"right":0.6897,"ece":0.0934},{"n":117,"brier":0.2032,"said":0.6519,"right":0.6923,"ece":0.0946},{"n":118,"brier":0.2023,"said":0.6521,"right":0.6949,"ece":0.091},{"n":119,"brier":0.2013,"said":0.6527,"right":0.6975,"ece":0.0926},{"n":120,"brier":0.2005,"said":0.6529,"right":0.7,"ece":0.0946},{"n":121,"brier":0.2037,"said":0.6538,"right":0.6942,"ece":0.0875},{"n":122,"brier":0.2031,"said":0.6537,"right":0.6967,"ece":0.0897},{"n":123,"brier":0.2026,"said":0.6534,"right":0.6992,"ece":0.0859},{"n":124,"brier":0.2061,"said":0.6547,"right":0.6935,"ece":0.0917},{"n":125,"brier":0.2088,"said":0.6553,"right":0.688,"ece":0.0969},{"n":126,"brier":0.2097,"said":0.6545,"right":0.6825,"ece":0.1006},{"n":127,"brier":0.2112,"said":0.6544,"right":0.6772,"ece":0.1048},{"n":128,"brier":0.211,"said":0.6536,"right":0.6797,"ece":0.1005},{"n":129,"brier":0.2101,"said":0.654,"right":0.6822,"ece":0.102},{"n":130,"brier":0.2107,"said":0.6531,"right":0.6769,"ece":0.0971},{"n":131,"brier":0.2112,"said":0.6521,"right":0.6718,"ece":0.0923},{"n":132,"brier":0.2103,"said":0.6525,"right":0.6742,"ece":0.0893},{"n":133,"brier":0.2104,"said":0.6516,"right":0.6767,"ece":0.0851},{"n":134,"brier":0.2092,"said":0.6524,"right":0.6791,"ece":0.0862},{"n":135,"brier":0.2082,"said":0.653,"right":0.6815,"ece":0.0876},{"n":136,"brier":0.2082,"said":0.6522,"right":0.6838,"ece":0.0836},{"n":137,"brier":0.2089,"said":0.6515,"right":0.6788,"ece":0.079},{"n":138,"brier":0.2086,"said":0.651,"right":0.6812,"ece":0.0815},{"n":139,"brier":0.2079,"said":0.6512,"right":0.6835,"ece":0.0832},{"n":140,"brier":0.2071,"said":0.6514,"right":0.6857,"ece":0.0804},{"n":141,"brier":0.2074,"said":0.6504,"right":0.6879,"ece":0.0763},{"n":142,"brier":0.2067,"said":0.6505,"right":0.6901,"ece":0.0757},{"n":143,"brier":0.2068,"said":0.6497,"right":0.6923,"ece":0.072},{"n":144,"brier":0.2078,"said":0.6492,"right":0.6875,"ece":0.0674},{"n":145,"brier":0.2067,"said":0.65,"right":0.6897,"ece":0.0653},{"n":146,"brier":0.2056,"said":0.6509,"right":0.6918,"ece":0.0633},{"n":147,"brier":0.207,"said":0.6508,"right":0.6871,"ece":0.0649},{"n":148,"brier":0.2078,"said":0.6503,"right":0.6824,"ece":0.0679},{"n":149,"brier":0.2091,"said":0.6501,"right":0.6779,"ece":0.0633},{"n":150,"brier":0.2085,"said":0.6502,"right":0.68,"ece":0.0606},{"n":151,"brier":0.2074,"said":0.651,"right":0.6821,"ece":0.0617},{"n":152,"brier":0.2066,"said":0.6515,"right":0.6842,"ece":0.0631},{"n":153,"brier":0.2079,"said":0.6514,"right":0.6797,"ece":0.0669},{"n":154,"brier":0.2074,"said":0.6512,"right":0.6818,"ece":0.0689},{"n":155,"brier":0.2097,"said":0.6519,"right":0.6774,"ece":0.0636},{"n":156,"brier":0.2127,"said":0.6529,"right":0.6731,"ece":0.0684},{"n":157,"brier":0.2129,"said":0.652,"right":0.6752,"ece":0.071},{"n":158,"brier":0.213,"said":0.6512,"right":0.6772,"ece":0.0676},{"n":159,"brier":0.2136,"said":0.6506,"right":0.673,"ece":0.0706},{"n":160,"brier":0.2145,"said":0.6503,"right":0.6687,"ece":0.0664},{"n":161,"brier":0.2139,"said":0.6504,"right":0.6708,"ece":0.0681},{"n":162,"brier":0.2129,"said":0.651,"right":0.6728,"ece":0.0692},{"n":163,"brier":0.2119,"said":0.6519,"right":0.6748,"ece":0.07},{"n":164,"brier":0.2137,"said":0.6523,"right":0.6707,"ece":0.0652},{"n":165,"brier":0.2126,"said":0.6531,"right":0.6727,"ece":0.0661},{"n":166,"brier":0.2139,"said":0.6531,"right":0.6687,"ece":0.0618},{"n":167,"brier":0.2134,"said":0.653,"right":0.6707,"ece":0.0592},{"n":168,"brier":0.2123,"said":0.6539,"right":0.6726,"ece":0.0599},{"n":169,"brier":0.2132,"said":0.6536,"right":0.6686,"ece":0.056},{"n":170,"brier":0.2127,"said":0.6535,"right":0.6706,"ece":0.0578},{"n":171,"brier":0.2123,"said":0.6533,"right":0.6725,"ece":0.0553},{"n":172,"brier":0.2119,"said":0.6532,"right":0.6744,"ece":0.0571},{"n":173,"brier":0.2114,"said":0.6531,"right":0.6763,"ece":0.0587},{"n":174,"brier":0.2116,"said":0.6522,"right":0.6782,"ece":0.0555},{"n":175,"brier":0.2114,"said":0.6518,"right":0.68,"ece":0.0561},{"n":176,"brier":0.2107,"said":0.6521,"right":0.6818,"ece":0.0541},{"n":177,"brier":0.2117,"said":0.6519,"right":0.678,"ece":0.0534},{"n":178,"brier":0.2126,"said":0.6517,"right":0.6742,"ece":0.0565},{"n":179,"brier":0.2126,"said":0.651,"right":0.676,"ece":0.0588},{"n":180,"brier":0.212,"said":0.6512,"right":0.6778,"ece":0.0566},{"n":181,"brier":0.2134,"said":0.6513,"right":0.674,"ece":0.0525},{"n":182,"brier":0.2128,"said":0.6515,"right":0.6758,"ece":0.0506},{"n":183,"brier":0.2123,"said":0.6516,"right":0.6776,"ece":0.0494},{"n":184,"brier":0.2128,"said":0.6511,"right":0.6739,"ece":0.049},{"n":185,"brier":0.2119,"said":0.6518,"right":0.6757,"ece":0.0476},{"n":186,"brier":0.2128,"said":0.6516,"right":0.672,"ece":0.044},{"n":187,"brier":0.2132,"said":0.651,"right":0.6684,"ece":0.0409},{"n":188,"brier":0.2127,"said":0.651,"right":0.6702,"ece":0.0425},{"n":189,"brier":0.2118,"said":0.6518,"right":0.672,"ece":0.0433},{"n":190,"brier":0.2116,"said":0.6514,"right":0.6737,"ece":0.0426},{"n":191,"brier":0.211,"said":0.6516,"right":0.6754,"ece":0.0439},{"n":192,"brier":0.2109,"said":0.6512,"right":0.6771,"ece":0.046},{"n":193,"brier":0.2106,"said":0.6509,"right":0.6788,"ece":0.0478},{"n":194,"brier":0.2121,"said":0.6512,"right":0.6753,"ece":0.0439},{"n":195,"brier":0.2134,"said":0.6513,"right":0.6718,"ece":0.0462},{"n":196,"brier":0.2134,"said":0.6507,"right":0.6735,"ece":0.0483},{"n":197,"brier":0.2124,"said":0.6517,"right":0.6751,"ece":0.0473},{"n":198,"brier":0.2117,"said":0.6522,"right":0.6768,"ece":0.0459},{"n":199,"brier":0.2112,"said":0.6522,"right":0.6784,"ece":0.0438},{"n":200,"brier":0.2105,"said":0.6528,"right":0.68,"ece":0.044}]},{"panelist":"coin","n":200,"brier":0.25,"log":0.6931,"meanConfidence":0.5,"accuracy":0,"gap":0,"skillPct":-18.79,"ece":0,"bins":[{"bucket":0.55,"n":200,"stated":0.5,"observed":0.5}]},{"panelist":"drunk","n":200,"brier":0.3246,"log":1.0025,"meanConfidence":0.7579,"accuracy":0.545,"gap":0.2129,"skillPct":-54.22,"ece":0.2415,"bins":[{"bucket":0.05,"n":18,"stated":0.0509,"observed":0.6667},{"bucket":0.15,"n":20,"stated":0.1375,"observed":0.35},{"bucket":0.25,"n":15,"stated":0.2363,"observed":0.4667},{"bucket":0.35,"n":20,"stated":0.3556,"observed":0.5},{"bucket":0.45,"n":22,"stated":0.4484,"observed":0.3182},{"bucket":0.55,"n":17,"stated":0.5555,"observed":0.4706},{"bucket":0.65,"n":20,"stated":0.6598,"observed":0.55},{"bucket":0.75,"n":18,"stated":0.7438,"observed":0.6111},{"bucket":0.85,"n":28,"stated":0.8509,"observed":0.6786},{"bucket":0.95,"n":22,"stated":0.9506,"observed":0.3636}]},{"panelist":"fox","n":200,"brier":0.2476,"log":0.6893,"meanConfidence":0.6502,"accuracy":0.575,"gap":0.0752,"skillPct":-17.67,"ece":0.076,"bins":[{"bucket":0.25,"n":19,"stated":0.2759,"observed":0.4211},{"bucket":0.35,"n":48,"stated":0.3543,"observed":0.4167},{"bucket":0.45,"n":24,"stated":0.4201,"observed":0.4167},{"bucket":0.55,"n":22,"stated":0.5815,"observed":0.4091},{"bucket":0.65,"n":59,"stated":0.6488,"observed":0.5763},{"bucket":0.75,"n":28,"stated":0.725,"observed":0.6786}],"curve":[{"n":1,"brier":0.4263,"said":0.6529,"right":0,"ece":0.6529},{"n":2,"brier":0.2964,"said":0.6224,"right":0.5,"ece":0.5305},{"n":3,"brier":0.2255,"said":0.6518,"right":0.6667,"ece":0.4501},{"n":4,"brier":0.2544,"said":0.6349,"right":0.5,"ece":0.2795},{"n":5,"brier":0.2238,"said":0.6443,"right":0.6,"ece":0.2872},{"n":6,"brier":0.212,"said":0.6384,"right":0.6667,"ece":0.3045},{"n":7,"brier":0.2579,"said":0.6515,"right":0.5714,"ece":0.2827},{"n":8,"brier":0.2783,"said":0.6512,"right":0.5,"ece":0.1663},{"n":9,"brier":0.2631,"said":0.6482,"right":0.5556,"ece":0.1061},{"n":10,"brier":0.252,"said":0.6443,"right":0.6,"ece":0.0791},{"n":11,"brier":0.272,"said":0.6482,"right":0.5455,"ece":0.1137},{"n":12,"brier":0.2774,"said":0.6425,"right":0.5,"ece":0.1526},{"n":13,"brier":0.2635,"said":0.6461,"right":0.5385,"ece":0.1647},{"n":14,"brier":0.2501,"said":0.6516,"right":0.5714,"ece":0.1331},{"n":15,"brier":0.2537,"said":0.6449,"right":0.5333,"ece":0.161},{"n":16,"brier":0.2467,"said":0.6435,"right":0.5625,"ece":0.1745},{"n":17,"brier":0.2585,"said":0.645,"right":0.5294,"ece":0.2035},{"n":18,"brier":0.253,"said":0.6424,"right":0.5556,"ece":0.17},{"n":19,"brier":0.244,"said":0.6462,"right":0.5789,"ece":0.1761},{"n":20,"brier":0.2366,"said":0.6483,"right":0.6,"ece":0.1517},{"n":21,"brier":0.2311,"said":0.6486,"right":0.619,"ece":0.128},{"n":22,"brier":0.228,"said":0.6461,"right":0.6364,"ece":0.1038},{"n":23,"brier":0.2246,"said":0.6448,"right":0.6522,"ece":0.116},{"n":24,"brier":0.2214,"said":0.6435,"right":0.6667,"ece":0.0951},{"n":25,"brier":0.2266,"said":0.6414,"right":0.64,"ece":0.115},{"n":26,"brier":0.2227,"said":0.6416,"right":0.6538,"ece":0.1241},{"n":27,"brier":0.2287,"said":0.6409,"right":0.6296,"ece":0.0965},{"n":28,"brier":0.2341,"said":0.64,"right":0.6071,"ece":0.0711},{"n":29,"brier":0.2374,"said":0.6377,"right":0.5862,"ece":0.0884},{"n":30,"brier":0.2322,"said":0.6402,"right":0.6,"ece":0.0841},{"n":31,"brier":0.2416,"said":0.6429,"right":0.5806,"ece":0.0967},{"n":32,"brier":0.2473,"said":0.6432,"right":0.5625,"ece":0.1141},{"n":33,"brier":0.2424,"said":0.6451,"right":0.5758,"ece":0.1017},{"n":34,"brier":0.2379,"said":0.6469,"right":0.5882,"ece":0.1073},{"n":35,"brier":0.2359,"said":0.6452,"right":0.6,"ece":0.0925},{"n":36,"brier":0.2437,"said":0.6472,"right":0.5833,"ece":0.1099},{"n":37,"brier":0.2401,"said":0.6478,"right":0.5946,"ece":0.098},{"n":38,"brier":0.2384,"said":0.6461,"right":0.6053,"ece":0.0987},{"n":39,"brier":0.2369,"said":0.6442,"right":0.6154,"ece":0.1071},{"n":40,"brier":0.2326,"said":0.6469,"right":0.625,"ece":0.0982},{"n":41,"brier":0.2361,"said":0.6461,"right":0.6098,"ece":0.1108},{"n":42,"brier":0.2397,"said":0.6455,"right":0.5952,"ece":0.123},{"n":43,"brier":0.2369,"said":0.6458,"right":0.6047,"ece":0.1121},{"n":44,"brier":0.2401,"said":0.6451,"right":0.5909,"ece":0.1235},{"n":45,"brier":0.2363,"said":0.6471,"right":0.6,"ece":0.1266},{"n":46,"brier":0.2393,"said":0.6464,"right":0.587,"ece":0.1264},{"n":47,"brier":0.2373,"said":0.6458,"right":0.5957,"ece":0.1156},{"n":48,"brier":0.2409,"said":0.6457,"right":0.5833,"ece":0.1265},{"n":49,"brier":0.2392,"said":0.6448,"right":0.5918,"ece":0.1172},{"n":50,"brier":0.2425,"said":0.6447,"right":0.58,"ece":0.1263},{"n":51,"brier":0.2445,"said":0.6435,"right":0.5686,"ece":0.1123},{"n":52,"brier":0.2492,"said":0.6445,"right":0.5577,"ece":0.1236},{"n":53,"brier":0.2525,"said":0.6447,"right":0.5472,"ece":0.1336},{"n":54,"brier":0.2508,"said":0.6438,"right":0.5556,"ece":0.1237},{"n":55,"brier":0.2536,"said":0.6437,"right":0.5455,"ece":0.1331},{"n":56,"brier":0.2503,"said":0.6455,"right":0.5536,"ece":0.126},{"n":57,"brier":0.2483,"said":0.6452,"right":0.5614,"ece":0.1173},{"n":58,"brier":0.2519,"said":0.6457,"right":0.5517,"ece":0.127},{"n":59,"brier":0.2556,"said":0.6464,"right":0.5424,"ece":0.1364},{"n":60,"brier":0.2564,"said":0.6448,"right":0.5333,"ece":0.1433},{"n":61,"brier":0.2542,"said":0.6448,"right":0.541,"ece":0.1352},{"n":62,"brier":0.2525,"said":0.6443,"right":0.5484,"ece":0.1268},{"n":63,"brier":0.2555,"said":0.6446,"right":0.5397,"ece":0.1353},{"n":64,"brier":0.2531,"said":0.6452,"right":0.5469,"ece":0.1282},{"n":65,"brier":0.2555,"said":0.6451,"right":0.5385,"ece":0.1361},{"n":66,"brier":0.2543,"said":0.6441,"right":0.5455,"ece":0.1276},{"n":67,"brier":0.2525,"said":0.644,"right":0.5522,"ece":0.1204},{"n":68,"brier":0.2503,"said":0.6446,"right":0.5588,"ece":0.1139},{"n":69,"brier":0.2517,"said":0.6438,"right":0.5507,"ece":0.1175},{"n":70,"brier":0.2493,"said":0.6447,"right":0.5571,"ece":0.1117},{"n":71,"brier":0.2473,"said":0.6452,"right":0.5634,"ece":0.1056},{"n":72,"brier":0.2453,"said":0.6456,"right":0.5694,"ece":0.0996},{"n":73,"brier":0.2429,"said":0.6468,"right":0.5753,"ece":0.0959},{"n":74,"brier":0.2445,"said":0.6461,"right":0.5676,"ece":0.1027},{"n":75,"brier":0.2459,"said":0.6454,"right":0.56,"ece":0.1092},{"n":76,"brier":0.2497,"said":0.6465,"right":0.5526,"ece":0.0982},{"n":77,"brier":0.2484,"said":0.646,"right":0.5584,"ece":0.0918},{"n":78,"brier":0.2467,"said":0.6463,"right":0.5641,"ece":0.0864},{"n":79,"brier":0.2498,"said":0.647,"right":0.557,"ece":0.0929},{"n":80,"brier":0.2531,"said":0.6479,"right":0.55,"ece":0.0979},{"n":81,"brier":0.252,"said":0.6472,"right":0.5556,"ece":0.0917},{"n":82,"brier":0.2512,"said":0.6463,"right":0.561,"ece":0.0853},{"n":83,"brier":0.2495,"said":0.6466,"right":0.5663,"ece":0.0803},{"n":84,"brier":0.2475,"said":0.6474,"right":0.5714,"ece":0.076},{"n":85,"brier":0.2454,"said":0.6483,"right":0.5765,"ece":0.0719},{"n":86,"brier":0.2434,"said":0.6494,"right":0.5814,"ece":0.0718},{"n":87,"brier":0.2417,"said":0.6499,"right":0.5862,"ece":0.0674},{"n":88,"brier":0.2434,"said":0.6496,"right":0.5795,"ece":0.0738},{"n":89,"brier":0.245,"said":0.6493,"right":0.573,"ece":0.08},{"n":90,"brier":0.2431,"said":0.6502,"right":0.5778,"ece":0.0761},{"n":91,"brier":0.2414,"said":0.6507,"right":0.5824,"ece":0.0719},{"n":92,"brier":0.2403,"said":0.6505,"right":0.587,"ece":0.0671},{"n":93,"brier":0.243,"said":0.651,"right":0.5806,"ece":0.0739},{"n":94,"brier":0.2437,"said":0.65,"right":0.5745,"ece":0.0791},{"n":95,"brier":0.2423,"said":0.6502,"right":0.5789,"ece":0.0747},{"n":96,"brier":0.2412,"said":0.6501,"right":0.5833,"ece":0.0702},{"n":97,"brier":0.24,"said":0.65,"right":0.5876,"ece":0.0658},{"n":98,"brier":0.2387,"said":0.6501,"right":0.5918,"ece":0.0616},{"n":99,"brier":0.2373,"said":0.6505,"right":0.596,"ece":0.0579},{"n":100,"brier":0.2389,"said":0.6503,"right":0.59,"ece":0.0637},{"n":101,"brier":0.2377,"said":0.6504,"right":0.5941,"ece":0.0596},{"n":102,"brier":0.2399,"said":0.6507,"right":0.5882,"ece":0.0657},{"n":103,"brier":0.2418,"said":0.6508,"right":0.5825,"ece":0.0715},{"n":104,"brier":0.2407,"said":0.6508,"right":0.5865,"ece":0.0675},{"n":105,"brier":0.2426,"said":0.651,"right":0.581,"ece":0.0732},{"n":106,"brier":0.241,"said":0.6517,"right":0.5849,"ece":0.0751},{"n":107,"brier":0.2403,"said":0.6512,"right":0.5888,"ece":0.0707},{"n":108,"brier":0.2391,"said":0.6513,"right":0.5926,"ece":0.0669},{"n":109,"brier":0.2378,"said":0.6517,"right":0.5963,"ece":0.0634},{"n":110,"brier":0.2385,"said":0.6509,"right":0.5909,"ece":0.068},{"n":111,"brier":0.2412,"said":0.6516,"right":0.5856,"ece":0.074},{"n":112,"brier":0.2422,"said":0.6512,"right":0.5804,"ece":0.0786},{"n":113,"brier":0.2417,"said":0.6504,"right":0.5841,"ece":0.0741},{"n":114,"brier":0.2408,"said":0.6502,"right":0.5877,"ece":0.0702},{"n":115,"brier":0.2396,"said":0.6505,"right":0.5913,"ece":0.0668},{"n":116,"brier":0.2405,"said":0.6499,"right":0.5862,"ece":0.0713},{"n":117,"brier":0.2418,"said":0.6497,"right":0.5812,"ece":0.076},{"n":118,"brier":0.2434,"said":0.6498,"right":0.5763,"ece":0.081},{"n":119,"brier":0.243,"said":0.649,"right":0.5798,"ece":0.0766},{"n":120,"brier":0.2424,"said":0.6486,"right":0.5833,"ece":0.0726},{"n":121,"brier":0.2413,"said":0.6486,"right":0.5868,"ece":0.0691},{"n":122,"brier":0.2399,"said":0.6493,"right":0.5902,"ece":0.0707},{"n":123,"brier":0.2415,"said":0.6494,"right":0.5854,"ece":0.0755},{"n":124,"brier":0.241,"said":0.6487,"right":0.5887,"ece":0.0762},{"n":125,"brier":0.2417,"said":0.6481,"right":0.584,"ece":0.0754},{"n":126,"brier":0.241,"said":0.6478,"right":0.5873,"ece":0.0717},{"n":127,"brier":0.2417,"said":0.6472,"right":0.5827,"ece":0.0757},{"n":128,"brier":0.2405,"said":0.6477,"right":0.5859,"ece":0.0774},{"n":129,"brier":0.2417,"said":0.6476,"right":0.5814,"ece":0.0816},{"n":130,"brier":0.2428,"said":0.6474,"right":0.5769,"ece":0.0858},{"n":131,"brier":0.2415,"said":0.648,"right":0.5802,"ece":0.0872},{"n":132,"brier":0.2409,"said":0.6475,"right":0.5833,"ece":0.0835},{"n":133,"brier":0.2396,"said":0.6482,"right":0.5865,"ece":0.0848},{"n":134,"brier":0.2416,"said":0.6486,"right":0.5821,"ece":0.0894},{"n":135,"brier":0.2426,"said":0.6484,"right":0.5778,"ece":0.0934},{"n":136,"brier":0.2418,"said":0.6483,"right":0.5809,"ece":0.09},{"n":137,"brier":0.2408,"said":0.6485,"right":0.5839,"ece":0.087},{"n":138,"brier":0.2399,"said":0.6486,"right":0.587,"ece":0.0838},{"n":139,"brier":0.2415,"said":0.6488,"right":0.5827,"ece":0.0881},{"n":140,"brier":0.2421,"said":0.6482,"right":0.5786,"ece":0.0915},{"n":141,"brier":0.2412,"said":0.6484,"right":0.5816,"ece":0.0886},{"n":142,"brier":0.242,"said":0.648,"right":0.5775,"ece":0.0921},{"n":143,"brier":0.2431,"said":0.6479,"right":0.5734,"ece":0.0959},{"n":144,"brier":0.2419,"said":0.6485,"right":0.5764,"ece":0.0971},{"n":145,"brier":0.2415,"said":0.648,"right":0.5793,"ece":0.0936},{"n":146,"brier":0.2406,"said":0.6481,"right":0.5822,"ece":0.0906},{"n":147,"brier":0.2403,"said":0.6475,"right":0.585,"ece":0.087},{"n":148,"brier":0.2424,"said":0.6482,"right":0.5811,"ece":0.0914},{"n":149,"brier":0.2431,"said":0.6477,"right":0.5772,"ece":0.0947},{"n":150,"brier":0.2419,"said":0.6483,"right":0.58,"ece":0.0923},{"n":151,"brier":0.2427,"said":0.6479,"right":0.5762,"ece":0.0956},{"n":152,"brier":0.2417,"said":0.6481,"right":0.5789,"ece":0.0928},{"n":153,"brier":0.2412,"said":0.6478,"right":0.5817,"ece":0.0897},{"n":154,"brier":0.2421,"said":0.6477,"right":0.5779,"ece":0.0932},{"n":155,"brier":0.2413,"said":0.6478,"right":0.5806,"ece":0.0904},{"n":156,"brier":0.2419,"said":0.6474,"right":0.5769,"ece":0.0936},{"n":157,"brier":0.2408,"said":0.648,"right":0.5796,"ece":0.0946},{"n":158,"brier":0.2398,"said":0.6484,"right":0.5823,"ece":0.0922},{"n":159,"brier":0.2408,"said":0.6483,"right":0.5786,"ece":0.0956},{"n":160,"brier":0.2404,"said":0.6478,"right":0.5813,"ece":0.0923},{"n":161,"brier":0.2397,"said":0.6477,"right":0.5839,"ece":0.0895},{"n":162,"brier":0.2393,"said":0.6473,"right":0.5864,"ece":0.0863},{"n":163,"brier":0.2386,"said":0.6474,"right":0.589,"ece":0.0838},{"n":164,"brier":0.2376,"said":0.6478,"right":0.5915,"ece":0.0815},{"n":165,"brier":0.2372,"said":0.6474,"right":0.5939,"ece":0.0785},{"n":166,"brier":0.238,"said":0.6473,"right":0.5904,"ece":0.0818},{"n":167,"brier":0.2397,"said":0.6477,"right":0.5868,"ece":0.077},{"n":168,"brier":0.2414,"said":0.6481,"right":0.5833,"ece":0.0723},{"n":169,"brier":0.2419,"said":0.6477,"right":0.5799,"ece":0.0752},{"n":170,"brier":0.2435,"said":0.6481,"right":0.5765,"ece":0.079},{"n":171,"brier":0.2445,"said":0.6481,"right":0.5731,"ece":0.0823},{"n":172,"brier":0.2439,"said":0.648,"right":0.5756,"ece":0.0797},{"n":173,"brier":0.2434,"said":0.6478,"right":0.578,"ece":0.077},{"n":174,"brier":0.2427,"said":0.6477,"right":0.5805,"ece":0.0744},{"n":175,"brier":0.2418,"said":0.6482,"right":0.5829,"ece":0.0725},{"n":176,"brier":0.2426,"said":0.6481,"right":0.5795,"ece":0.0756},{"n":177,"brier":0.2444,"said":0.6486,"right":0.5763,"ece":0.0794},{"n":178,"brier":0.2439,"said":0.6483,"right":0.5787,"ece":0.0767},{"n":179,"brier":0.2445,"said":0.648,"right":0.5754,"ece":0.0796},{"n":180,"brier":0.244,"said":0.6478,"right":0.5778,"ece":0.0769},{"n":181,"brier":0.2448,"said":0.6476,"right":0.5746,"ece":0.0799},{"n":182,"brier":0.2445,"said":0.6471,"right":0.5769,"ece":0.0771},{"n":183,"brier":0.2436,"said":0.6476,"right":0.5792,"ece":0.0752},{"n":184,"brier":0.2449,"said":0.6479,"right":0.5761,"ece":0.0786},{"n":185,"brier":0.2465,"said":0.6483,"right":0.573,"ece":0.0753},{"n":186,"brier":0.2455,"said":0.6487,"right":0.5753,"ece":0.0735},{"n":187,"brier":0.2452,"said":0.6483,"right":0.5775,"ece":0.0717},{"n":188,"brier":0.2447,"said":0.6481,"right":0.5798,"ece":0.0692},{"n":189,"brier":0.2462,"said":0.6485,"right":0.5767,"ece":0.0726},{"n":190,"brier":0.2454,"said":0.6486,"right":0.5789,"ece":0.0705},{"n":191,"brier":0.2465,"said":0.6488,"right":0.5759,"ece":0.0738},{"n":192,"brier":0.246,"said":0.6487,"right":0.5781,"ece":0.0714},{"n":193,"brier":0.2451,"said":0.6491,"right":0.5803,"ece":0.0696},{"n":194,"brier":0.2457,"said":0.6489,"right":0.5773,"ece":0.0724},{"n":195,"brier":0.2448,"said":0.6494,"right":0.5795,"ece":0.0723},{"n":196,"brier":0.246,"said":0.6495,"right":0.5765,"ece":0.0754},{"n":197,"brier":0.2455,"said":0.6493,"right":0.5787,"ece":0.073},{"n":198,"brier":0.2468,"said":0.6496,"right":0.5758,"ece":0.0746},{"n":199,"brier":0.2484,"said":0.65,"right":0.5729,"ece":0.078},{"n":200,"brier":0.2476,"said":0.6502,"right":0.575,"ece":0.076}]},{"panelist":"hedgehog","n":200,"brier":0.3342,"log":1.0269,"meanConfidence":0.9118,"accuracy":0.6,"gap":0.3118,"skillPct":-58.79,"ece":0.3118,"bins":[{"bucket":0.05,"n":69,"stated":0.0671,"observed":0.3768},{"bucket":0.15,"n":37,"stated":0.1186,"observed":0.4595},{"bucket":0.85,"n":39,"stated":0.8787,"observed":0.4359},{"bucket":0.95,"n":55,"stated":0.9292,"observed":0.7273}],"curve":[{"n":1,"brier":0.0092,"said":0.9041,"right":1,"ece":0.0959},{"n":2,"brier":0.0062,"said":0.9241,"right":1,"ece":0.076},{"n":3,"brier":0.005,"said":0.9325,"right":1,"ece":0.0675},{"n":4,"brier":0.2272,"said":0.9357,"right":0.75,"ece":0.211},{"n":5,"brier":0.1821,"said":0.9397,"right":0.8,"ece":0.16},{"n":6,"brier":0.3051,"said":0.943,"right":0.6667,"ece":0.2763},{"n":7,"brier":0.2618,"said":0.945,"right":0.7143,"ece":0.2307},{"n":8,"brier":0.3365,"said":0.9428,"right":0.625,"ece":0.3178},{"n":9,"brier":0.3002,"said":0.9385,"right":0.6667,"ece":0.2718},{"n":10,"brier":0.2712,"said":0.9342,"right":0.7,"ece":0.2551},{"n":11,"brier":0.2479,"said":0.929,"right":0.7273,"ece":0.2431},{"n":12,"brier":0.2964,"said":0.9275,"right":0.6667,"ece":0.2987},{"n":13,"brier":0.3363,"said":0.9256,"right":0.6154,"ece":0.3452},{"n":14,"brier":0.3125,"said":0.9265,"right":0.6429,"ece":0.3161},{"n":15,"brier":0.3417,"said":0.9225,"right":0.6,"ece":0.3388},{"n":16,"brier":0.3207,"said":0.9225,"right":0.625,"ece":0.3128},{"n":17,"brier":0.3028,"said":0.9194,"right":0.6471,"ece":0.3021},{"n":18,"brier":0.2862,"said":0.9204,"right":0.6667,"ece":0.2818},{"n":19,"brier":0.2716,"said":0.9199,"right":0.6842,"ece":0.2623},{"n":20,"brier":0.2584,"said":0.9194,"right":0.7,"ece":0.2448},{"n":21,"brier":0.2858,"said":0.9192,"right":0.6667,"ece":0.2766},{"n":22,"brier":0.2732,"said":0.9189,"right":0.6818,"ece":0.2601},{"n":23,"brier":0.2996,"said":0.9198,"right":0.6522,"ece":0.2896},{"n":24,"brier":0.2878,"said":0.9175,"right":0.6667,"ece":0.2719},{"n":25,"brier":0.2764,"said":0.9186,"right":0.68,"ece":0.2588},{"n":26,"brier":0.2659,"said":0.9194,"right":0.6923,"ece":0.2466},{"n":27,"brier":0.2858,"said":0.9186,"right":0.6667,"ece":0.2519},{"n":28,"brier":0.2763,"said":0.9166,"right":0.6786,"ece":0.238},{"n":29,"brier":0.294,"said":0.9157,"right":0.6552,"ece":0.2605},{"n":30,"brier":0.3101,"said":0.9145,"right":0.6333,"ece":0.2812},{"n":31,"brier":0.3249,"said":0.9133,"right":0.6129,"ece":0.3004},{"n":32,"brier":0.3149,"said":0.9138,"right":0.625,"ece":0.2888},{"n":33,"brier":0.3054,"said":0.9151,"right":0.6364,"ece":0.2788},{"n":34,"brier":0.2965,"said":0.9159,"right":0.6471,"ece":0.2689},{"n":35,"brier":0.3106,"said":0.9151,"right":0.6286,"ece":0.2865},{"n":36,"brier":0.3256,"said":0.9153,"right":0.6111,"ece":0.3042},{"n":37,"brier":0.338,"said":0.9145,"right":0.5946,"ece":0.3199},{"n":38,"brier":0.3293,"said":0.9146,"right":0.6053,"ece":0.3094},{"n":39,"brier":0.3405,"said":0.9137,"right":0.5897,"ece":0.3239},{"n":40,"brier":0.3514,"said":0.9129,"right":0.575,"ece":0.3379},{"n":41,"brier":0.3433,"said":0.9117,"right":0.5854,"ece":0.3263},{"n":42,"brier":0.3352,"said":0.9122,"right":0.5952,"ece":0.317},{"n":43,"brier":0.3278,"said":0.9112,"right":0.6047,"ece":0.3065},{"n":44,"brier":0.3207,"said":0.9105,"right":0.6136,"ece":0.2969},{"n":45,"brier":0.3303,"said":0.9095,"right":0.6,"ece":0.3095},{"n":46,"brier":0.3232,"said":0.9102,"right":0.6087,"ece":0.3016},{"n":47,"brier":0.3352,"said":0.9109,"right":0.5957,"ece":0.3152},{"n":48,"brier":0.3285,"said":0.9101,"right":0.6042,"ece":0.3059},{"n":49,"brier":0.3219,"said":0.9106,"right":0.6122,"ece":0.2983},{"n":50,"brier":0.3156,"said":0.9109,"right":0.62,"ece":0.2909},{"n":51,"brier":0.3271,"said":0.9117,"right":0.6078,"ece":0.3038},{"n":52,"brier":0.3209,"said":0.9122,"right":0.6154,"ece":0.2968},{"n":53,"brier":0.3311,"said":0.9125,"right":0.6038,"ece":0.3087},{"n":54,"brier":0.3406,"said":0.9126,"right":0.5926,"ece":0.32},{"n":55,"brier":0.3346,"said":0.9123,"right":0.6,"ece":0.3123},{"n":56,"brier":0.3441,"said":0.9127,"right":0.5893,"ece":0.3234},{"n":57,"brier":0.3382,"said":0.9124,"right":0.5965,"ece":0.3159},{"n":58,"brier":0.3324,"said":0.913,"right":0.6034,"ece":0.3096},{"n":59,"brier":0.3398,"said":0.9124,"right":0.5932,"ece":0.3192},{"n":60,"brier":0.3342,"said":0.9127,"right":0.6,"ece":0.3127},{"n":61,"brier":0.3413,"said":0.9121,"right":0.5902,"ece":0.322},{"n":62,"brier":0.3359,"said":0.9123,"right":0.5968,"ece":0.3155},{"n":63,"brier":0.3308,"said":0.912,"right":0.6032,"ece":0.3088},{"n":64,"brier":0.3382,"said":0.9118,"right":0.5938,"ece":0.318},{"n":65,"brier":0.3332,"said":0.9112,"right":0.6,"ece":0.3111},{"n":66,"brier":0.3284,"said":0.9108,"right":0.6061,"ece":0.3047},{"n":67,"brier":0.3235,"said":0.9114,"right":0.6119,"ece":0.2994},{"n":68,"brier":0.3299,"said":0.9108,"right":0.6029,"ece":0.3078},{"n":69,"brier":0.3252,"said":0.9111,"right":0.6087,"ece":0.3024},{"n":70,"brier":0.3205,"said":0.9117,"right":0.6143,"ece":0.2974},{"n":71,"brier":0.3161,"said":0.9123,"right":0.6197,"ece":0.2926},{"n":72,"brier":0.3118,"said":0.9124,"right":0.625,"ece":0.2874},{"n":73,"brier":0.3076,"said":0.9124,"right":0.6301,"ece":0.2823},{"n":74,"brier":0.3135,"said":0.9117,"right":0.6216,"ece":0.2901},{"n":75,"brier":0.3094,"said":0.9117,"right":0.6267,"ece":0.285},{"n":76,"brier":0.3054,"said":0.9121,"right":0.6316,"ece":0.2806},{"n":77,"brier":0.3016,"said":0.912,"right":0.6364,"ece":0.2756},{"n":78,"brier":0.2978,"said":0.9118,"right":0.641,"ece":0.2708},{"n":79,"brier":0.2942,"said":0.9117,"right":0.6456,"ece":0.2661},{"n":80,"brier":0.3012,"said":0.9119,"right":0.6375,"ece":0.2744},{"n":81,"brier":0.2976,"said":0.912,"right":0.642,"ece":0.27},{"n":82,"brier":0.294,"said":0.9121,"right":0.6463,"ece":0.2658},{"n":83,"brier":0.2906,"said":0.9118,"right":0.6506,"ece":0.2612},{"n":84,"brier":0.2874,"said":0.9112,"right":0.6548,"ece":0.2564},{"n":85,"brier":0.2948,"said":0.9117,"right":0.6471,"ece":0.2646},{"n":86,"brier":0.3013,"said":0.9118,"right":0.6395,"ece":0.2723},{"n":87,"brier":0.307,"said":0.9116,"right":0.6322,"ece":0.2794},{"n":88,"brier":0.3036,"said":0.9118,"right":0.6364,"ece":0.2754},{"n":89,"brier":0.3102,"said":0.9122,"right":0.6292,"ece":0.283},{"n":90,"brier":0.3155,"said":0.9119,"right":0.6222,"ece":0.2897},{"n":91,"brier":0.3202,"said":0.9114,"right":0.6154,"ece":0.2959},{"n":92,"brier":0.3169,"said":0.9109,"right":0.6196,"ece":0.2913},{"n":93,"brier":0.3224,"said":0.9108,"right":0.6129,"ece":0.2979},{"n":94,"brier":0.3276,"said":0.9108,"right":0.6064,"ece":0.3043},{"n":95,"brier":0.3242,"said":0.9112,"right":0.6105,"ece":0.3007},{"n":96,"brier":0.3209,"said":0.9113,"right":0.6146,"ece":0.2967},{"n":97,"brier":0.3177,"said":0.9113,"right":0.6186,"ece":0.2928},{"n":98,"brier":0.3145,"said":0.9112,"right":0.6224,"ece":0.2887},{"n":99,"brier":0.3115,"said":0.911,"right":0.6263,"ece":0.2848},{"n":100,"brier":0.3175,"said":0.9114,"right":0.62,"ece":0.2914},{"n":101,"brier":0.3144,"said":0.9113,"right":0.6238,"ece":0.2875},{"n":102,"brier":0.3115,"said":0.911,"right":0.6275,"ece":0.2835},{"n":103,"brier":0.3085,"said":0.9114,"right":0.6311,"ece":0.2804},{"n":104,"brier":0.3133,"said":0.9113,"right":0.625,"ece":0.2863},{"n":105,"brier":0.3104,"said":0.9112,"right":0.6286,"ece":0.2826},{"n":106,"brier":0.3076,"said":0.9107,"right":0.6321,"ece":0.2786},{"n":107,"brier":0.3131,"said":0.911,"right":0.6262,"ece":0.2848},{"n":108,"brier":0.3103,"said":0.9114,"right":0.6296,"ece":0.2817},{"n":109,"brier":0.3143,"said":0.911,"right":0.6239,"ece":0.2871},{"n":110,"brier":0.3114,"said":0.9114,"right":0.6273,"ece":0.284},{"n":111,"brier":0.3168,"said":0.9117,"right":0.6216,"ece":0.2901},{"n":112,"brier":0.314,"said":0.9117,"right":0.625,"ece":0.2866},{"n":113,"brier":0.3193,"said":0.9121,"right":0.6195,"ece":0.2926},{"n":114,"brier":0.323,"said":0.9116,"right":0.614,"ece":0.2975},{"n":115,"brier":0.3274,"said":0.9116,"right":0.6087,"ece":0.3029},{"n":116,"brier":0.3246,"said":0.9119,"right":0.6121,"ece":0.2999},{"n":117,"brier":0.3219,"said":0.912,"right":0.6154,"ece":0.2966},{"n":118,"brier":0.3258,"said":0.9117,"right":0.6102,"ece":0.3015},{"n":119,"brier":0.323,"said":0.912,"right":0.6134,"ece":0.2986},{"n":120,"brier":0.3274,"said":0.9121,"right":0.6083,"ece":0.3038},{"n":121,"brier":0.3312,"said":0.9119,"right":0.6033,"ece":0.3086},{"n":122,"brier":0.3359,"said":0.9122,"right":0.5984,"ece":0.3139},{"n":123,"brier":0.3393,"said":0.9119,"right":0.5935,"ece":0.3184},{"n":124,"brier":0.3367,"said":0.9115,"right":0.5968,"ece":0.3148},{"n":125,"brier":0.3403,"said":0.9113,"right":0.592,"ece":0.3193},{"n":126,"brier":0.3377,"said":0.9111,"right":0.5952,"ece":0.3159},{"n":127,"brier":0.3422,"said":0.9114,"right":0.5906,"ece":0.3209},{"n":128,"brier":0.3395,"said":0.9115,"right":0.5938,"ece":0.3178},{"n":129,"brier":0.337,"said":0.9115,"right":0.5969,"ece":0.3146},{"n":130,"brier":0.3344,"said":0.9118,"right":0.6,"ece":0.3118},{"n":131,"brier":0.3384,"said":0.9119,"right":0.5954,"ece":0.3165},{"n":132,"brier":0.3359,"said":0.9119,"right":0.5985,"ece":0.3134},{"n":133,"brier":0.3393,"said":0.9117,"right":0.594,"ece":0.3178},{"n":134,"brier":0.3368,"said":0.9118,"right":0.597,"ece":0.3148},{"n":135,"brier":0.3344,"said":0.9115,"right":0.6,"ece":0.3116},{"n":136,"brier":0.3386,"said":0.9118,"right":0.5956,"ece":0.3162},{"n":137,"brier":0.3424,"said":0.9119,"right":0.5912,"ece":0.3207},{"n":138,"brier":0.3401,"said":0.9116,"right":0.5942,"ece":0.3174},{"n":139,"brier":0.3377,"said":0.9118,"right":0.5971,"ece":0.3146},{"n":140,"brier":0.3354,"said":0.9115,"right":0.6,"ece":0.3115},{"n":141,"brier":0.3393,"said":0.9117,"right":0.5957,"ece":0.3159},{"n":142,"brier":0.337,"said":0.9114,"right":0.5986,"ece":0.3129},{"n":143,"brier":0.34,"said":0.9112,"right":0.5944,"ece":0.3168},{"n":144,"brier":0.3431,"said":0.911,"right":0.5903,"ece":0.3208},{"n":145,"brier":0.346,"said":0.9108,"right":0.5862,"ece":0.3246},{"n":146,"brier":0.3436,"said":0.911,"right":0.589,"ece":0.3219},{"n":147,"brier":0.3414,"said":0.9108,"right":0.5918,"ece":0.319},{"n":148,"brier":0.3442,"said":0.9105,"right":0.5878,"ece":0.3227},{"n":149,"brier":0.3419,"said":0.9108,"right":0.5906,"ece":0.3202},{"n":150,"brier":0.3448,"said":0.9105,"right":0.5867,"ece":0.3239},{"n":151,"brier":0.3425,"said":0.9106,"right":0.5894,"ece":0.3212},{"n":152,"brier":0.3462,"said":0.9109,"right":0.5855,"ece":0.3253},{"n":153,"brier":0.3492,"said":0.9108,"right":0.5817,"ece":0.329},{"n":154,"brier":0.347,"said":0.9105,"right":0.5844,"ece":0.3261},{"n":155,"brier":0.3449,"said":0.9103,"right":0.5871,"ece":0.3232},{"n":156,"brier":0.3476,"said":0.9101,"right":0.5833,"ece":0.3267},{"n":157,"brier":0.3455,"said":0.91,"right":0.586,"ece":0.324},{"n":158,"brier":0.3433,"said":0.9102,"right":0.5886,"ece":0.3216},{"n":159,"brier":0.3412,"said":0.9102,"right":0.5912,"ece":0.319},{"n":160,"brier":0.3438,"said":0.9099,"right":0.5875,"ece":0.3224},{"n":161,"brier":0.3417,"said":0.91,"right":0.5901,"ece":0.32},{"n":162,"brier":0.3447,"said":0.91,"right":0.5864,"ece":0.3236},{"n":163,"brier":0.3426,"said":0.9102,"right":0.589,"ece":0.3213},{"n":164,"brier":0.3405,"said":0.9104,"right":0.5915,"ece":0.3189},{"n":165,"brier":0.3438,"said":0.9105,"right":0.5879,"ece":0.3227},{"n":166,"brier":0.3417,"said":0.9107,"right":0.5904,"ece":0.3203},{"n":167,"brier":0.3397,"said":0.9107,"right":0.5928,"ece":0.3179},{"n":168,"brier":0.3378,"said":0.9105,"right":0.5952,"ece":0.3152},{"n":169,"brier":0.3406,"said":0.9104,"right":0.5917,"ece":0.3187},{"n":170,"brier":0.3387,"said":0.9103,"right":0.5941,"ece":0.3162},{"n":171,"brier":0.3414,"said":0.9102,"right":0.5906,"ece":0.3196},{"n":172,"brier":0.3441,"said":0.9102,"right":0.5872,"ece":0.323},{"n":173,"brier":0.3422,"said":0.9102,"right":0.5896,"ece":0.3206},{"n":174,"brier":0.3452,"said":0.9103,"right":0.5862,"ece":0.3241},{"n":175,"brier":0.3432,"said":0.9105,"right":0.5886,"ece":0.322},{"n":176,"brier":0.3413,"said":0.9106,"right":0.5909,"ece":0.3197},{"n":177,"brier":0.3394,"said":0.9107,"right":0.5932,"ece":0.3175},{"n":178,"brier":0.3426,"said":0.9109,"right":0.5899,"ece":0.3211},{"n":179,"brier":0.3408,"said":0.911,"right":0.5922,"ece":0.3188},{"n":180,"brier":0.3389,"said":0.9112,"right":0.5944,"ece":0.3167},{"n":181,"brier":0.337,"said":0.9112,"right":0.5967,"ece":0.3145},{"n":182,"brier":0.3352,"said":0.9113,"right":0.5989,"ece":0.3124},{"n":183,"brier":0.3375,"said":0.9111,"right":0.5956,"ece":0.3154},{"n":184,"brier":0.3357,"said":0.9111,"right":0.5978,"ece":0.3133},{"n":185,"brier":0.3339,"said":0.9114,"right":0.6,"ece":0.3114},{"n":186,"brier":0.3364,"said":0.9113,"right":0.5968,"ece":0.3145},{"n":187,"brier":0.3346,"said":0.9114,"right":0.5989,"ece":0.3124},{"n":188,"brier":0.3329,"said":0.9113,"right":0.6011,"ece":0.3103},{"n":189,"brier":0.3311,"said":0.9115,"right":0.6032,"ece":0.3083},{"n":190,"brier":0.3339,"said":0.9116,"right":0.6,"ece":0.3116},{"n":191,"brier":0.3364,"said":0.9116,"right":0.5969,"ece":0.3146},{"n":192,"brier":0.3347,"said":0.9115,"right":0.599,"ece":0.3126},{"n":193,"brier":0.3374,"said":0.9116,"right":0.5959,"ece":0.3157},{"n":194,"brier":0.3356,"said":0.9117,"right":0.5979,"ece":0.3138},{"n":195,"brier":0.334,"said":0.9117,"right":0.6,"ece":0.3118},{"n":196,"brier":0.3323,"said":0.9119,"right":0.602,"ece":0.3099},{"n":197,"brier":0.3306,"said":0.9119,"right":0.6041,"ece":0.3079},{"n":198,"brier":0.333,"said":0.9118,"right":0.601,"ece":0.3108},{"n":199,"brier":0.3358,"said":0.912,"right":0.598,"ece":0.314},{"n":200,"brier":0.3342,"said":0.9118,"right":0.6,"ece":0.3118}]},{"panelist":"parrot","n":200,"brier":0.2105,"log":0.6098,"meanConfidence":0.6528,"accuracy":0.68,"gap":-0.0272,"skillPct":0,"ece":0.044,"bins":[{"bucket":0.15,"n":3,"stated":0.191,"observed":0},{"bucket":0.25,"n":24,"stated":0.2567,"observed":0.25},{"bucket":0.35,"n":51,"stated":0.3487,"observed":0.3529},{"bucket":0.45,"n":32,"stated":0.4525,"observed":0.4063},{"bucket":0.55,"n":18,"stated":0.532,"observed":0.5556},{"bucket":0.65,"n":38,"stated":0.6442,"observed":0.7105},{"bucket":0.75,"n":31,"stated":0.7429,"observed":0.8065},{"bucket":0.85,"n":3,"stated":0.8217,"observed":0.3333}]}],"walkthrough":[{"id":"q-2026-09-18-33df2d","text":"Ethereum base fee, gwei closes at or below 7.01 on 2026-09-18","askedOn":"2026-09-11","resolvesOn":"2026-09-18","baseRate":0.637,"source":"gas.gwei","test":"lte 7.01","reading":7.88,"outcome":false,"forecasts":[{"panelist":"hedgehog","p":0.0959,"because":"the whole thing turns on one factor, and it points no","brier":0.0092,"right":true,"seal":"e3d1dd3c"},{"panelist":"fox","p":0.6529,"because":"several small things lean yes; none of them decides it","brier":0.4263,"right":false,"seal":"0a53ae29"},{"panelist":"parrot","p":0.637,"because":"the base rate for this class of question is 64%","brier":0.4058,"right":false,"seal":"b47dfed7"},{"panelist":"drunk","p":0.4165,"because":"no reason","brier":0.1735,"right":true,"seal":"32814643"}]},{"id":"q-2026-09-18-1c7411","text":"US 10-year yield closes at or above 4.099 on 2026-09-18","askedOn":"2026-09-11","resolvesOn":"2026-09-18","baseRate":0.24,"source":"ust10y.yield","test":"gte 4.099","reading":3.967,"outcome":false,"forecasts":[{"panelist":"hedgehog","p":0.056,"because":"the whole thing turns on one factor, and it points no","brier":0.0031,"right":true,"seal":"6a1e653a"},{"panelist":"fox","p":0.4081,"because":"several small things lean no; none of them decides it","brier":0.1665,"right":true,"seal":"8ce64521"},{"panelist":"parrot","p":0.24,"because":"the base rate for this class of question is 24%","brier":0.0576,"right":true,"seal":"697b5968"},{"panelist":"drunk","p":0.175,"because":"no reason","brier":0.0306,"right":true,"seal":"a12d5627"}]},{"id":"q-2026-09-20-66d6cc","text":"ETH close closes at or above 2,779 on 2026-09-20","askedOn":"2026-09-13","resolvesOn":"2026-09-20","baseRate":0.393,"source":"eth.close","test":"gte 2779","reading":2783,"outcome":true,"forecasts":[{"panelist":"hedgehog","p":0.9494,"because":"the whole thing turns on one factor, and it points yes","brier":0.0026,"right":true,"seal":"79f3593d"},{"panelist":"fox","p":0.7106,"because":"several small things lean yes; none of them decides it","brier":0.0838,"right":true,"seal":"d35a6ae4"},{"panelist":"parrot","p":0.393,"because":"the base rate for this class of question is 39%","brier":0.3684,"right":false,"seal":"a3d3347c"},{"panelist":"drunk","p":0.0104,"because":"no reason","brier":0.9793,"right":false,"seal":"11538285"}]},{"id":"q-2026-09-20-5165f5","text":"Ethereum base fee, gwei closes at or above 6.58 on 2026-09-20","askedOn":"2026-09-13","resolvesOn":"2026-09-20","baseRate":0.395,"source":"gas.gwei","test":"gte 6.58","reading":8.76,"outcome":true,"forecasts":[{"panelist":"hedgehog","p":0.0546,"because":"the whole thing turns on one factor, and it points no","brier":0.8938,"right":false,"seal":"7fdec958"},{"panelist":"fox","p":0.416,"because":"several small things lean no; none of them decides it","brier":0.3411,"right":false,"seal":"108af862"},{"panelist":"parrot","p":0.395,"because":"the base rate for this class of question is 40%","brier":0.366,"right":false,"seal":"15ba3707"},{"panelist":"drunk","p":0.7377,"because":"no reason","brier":0.0688,"right":true,"seal":"cd9dcdbe"}]},{"id":"q-2026-09-21-818b77","text":"US 10-year yield closes at or above 4.038 on 2026-09-21","askedOn":"2026-09-14","resolvesOn":"2026-09-21","baseRate":0.485,"source":"ust10y.yield","test":"gte 4.038","reading":3.856,"outcome":false,"forecasts":[{"panelist":"hedgehog","p":0.0444,"because":"the whole thing turns on one factor, and it points no","brier":0.002,"right":true,"seal":"02d16b17"},{"panelist":"fox","p":0.318,"because":"several small things lean no; none of them decides it","brier":0.1011,"right":true,"seal":"b62dc983"},{"panelist":"parrot","p":0.485,"because":"the base rate for this class of question is 49%","brier":0.2352,"right":true,"seal":"f150b4af"},{"panelist":"drunk","p":0.1093,"because":"no reason","brier":0.0119,"right":true,"seal":"9955ac48"}]},{"id":"q-2026-09-22-37902c","text":"US 10-year yield closes at or above 3.908 on 2026-09-22","askedOn":"2026-09-15","resolvesOn":"2026-09-22","baseRate":0.701,"source":"ust10y.yield","test":"gte 3.908","reading":3.899,"outcome":false,"forecasts":[{"panelist":"hedgehog","p":0.9592,"because":"the whole thing turns on one factor, and it points yes","brier":0.9201,"right":false,"seal":"f9b5cfbf"},{"panelist":"fox","p":0.3912,"because":"several small things lean no; none of them decides it","brier":0.153,"right":true,"seal":"142f6e2e"},{"panelist":"parrot","p":0.701,"because":"the base rate for this class of question is 70%","brier":0.4914,"right":false,"seal":"4319d041"},{"panelist":"drunk","p":0.4745,"because":"no reason","brier":0.2252,"right":true,"seal":"b63eed1e"}]},{"id":"q-2026-09-22-3221d3","text":"US 10-year yield closes at or above 4.086 on 2026-09-22","askedOn":"2026-09-15","resolvesOn":"2026-09-22","baseRate":0.291,"source":"ust10y.yield","test":"gte 4.086","reading":3.899,"outcome":false,"forecasts":[{"panelist":"hedgehog","p":0.0425,"because":"the whole thing turns on one factor, and it points no","brier":0.0018,"right":true,"seal":"4f969b59"},{"panelist":"fox","p":0.7306,"because":"several small things lean yes; none of them decides it","brier":0.5338,"right":false,"seal":"4afd84e6"},{"panelist":"parrot","p":0.291,"because":"the base rate for this class of question is 29%","brier":0.0847,"right":true,"seal":"04bd3adb"},{"panelist":"drunk","p":0.6713,"because":"no reason","brier":0.4506,"right":false,"seal":"0f8b81f0"}]},{"id":"q-2026-09-23-b41872","text":"Ethereum base fee, gwei closes at or above 7.52 on 2026-09-23","askedOn":"2026-09-16","resolvesOn":"2026-09-23","baseRate":0.446,"source":"gas.gwei","test":"gte 7.52","reading":8.02,"outcome":true,"forecasts":[{"panelist":"hedgehog","p":0.0728,"because":"the whole thing turns on one factor, and it points no","brier":0.8597,"right":false,"seal":"6e6f1699"},{"panelist":"fox","p":0.3512,"because":"several small things lean no; none of them decides it","brier":0.4209,"right":false,"seal":"5d2b785e"},{"panelist":"parrot","p":0.446,"because":"the base rate for this class of question is 45%","brier":0.3069,"right":false,"seal":"c48365e8"},{"panelist":"drunk","p":0.7201,"because":"no reason","brier":0.0783,"right":true,"seal":"645880a8"}]},{"id":"q-2026-09-25-d26625","text":"VIX close closes at or above 15.54 on 2026-09-25","askedOn":"2026-09-11","resolvesOn":"2026-09-25","baseRate":0.33,"source":"vix.close","test":"gte 15.54","reading":15.96,"outcome":true,"forecasts":[{"panelist":"hedgehog","p":0.9043,"because":"the whole thing turns on one factor, and it points yes","brier":0.0092,"right":true,"seal":"81fea544"},{"panelist":"fox","p":0.6244,"because":"several small things lean yes; none of them decides it","brier":0.1411,"right":true,"seal":"764672c3"},{"panelist":"parrot","p":0.33,"because":"the base rate for this class of question is 33%","brier":0.4489,"right":false,"seal":"19c347b8"},{"panelist":"drunk","p":0.4619,"because":"no reason","brier":0.2896,"right":false,"seal":"49c4c5ab"}]},{"id":"q-2026-09-26-10c0fa","text":"S&P 500 close closes at or below 6,340.32 on 2026-09-26","askedOn":"2026-09-12","resolvesOn":"2026-09-26","baseRate":0.513,"source":"spx.close","test":"lte 6340.32","reading":6294.19,"outcome":true,"forecasts":[{"panelist":"hedgehog","p":0.8953,"because":"the whole thing turns on one factor, and it points yes","brier":0.011,"right":true,"seal":"683e93d5"},{"panelist":"fox","p":0.6092,"because":"several small things lean yes; none of them decides it","brier":0.1527,"right":true,"seal":"e0ec3e00"},{"panelist":"parrot","p":0.513,"because":"the base rate for this class of question is 51%","brier":0.2372,"right":true,"seal":"a7f323ad"},{"panelist":"drunk","p":0.4761,"because":"no reason","brier":0.2745,"right":false,"seal":"67b805f1"}]},{"id":"q-2026-09-27-5e01fb","text":"BTC close closes at or below 97,895 on 2026-09-27","askedOn":"2026-09-20","resolvesOn":"2026-09-27","baseRate":0.345,"source":"btc.close","test":"lte 97895","reading":114561,"outcome":false,"forecasts":[{"panelist":"hedgehog","p":0.1226,"because":"the whole thing turns on one factor, and it points no","brier":0.015,"right":true,"seal":"08008f95"},{"panelist":"fox","p":0.6869,"because":"several small things lean yes; none of them decides it","brier":0.4718,"right":false,"seal":"06691b50"},{"panelist":"parrot","p":0.345,"because":"the base rate for this class of question is 35%","brier":0.119,"right":true,"seal":"55ae275a"},{"panelist":"drunk","p":0.8204,"because":"no reason","brier":0.6731,"right":false,"seal":"0593f400"}]},{"id":"q-2026-09-28-9b128f","text":"VIX close closes at or below 17.00 on 2026-09-28","askedOn":"2026-09-14","resolvesOn":"2026-09-28","baseRate":0.769,"source":"vix.close","test":"lte 17","reading":16.2,"outcome":true,"forecasts":[{"panelist":"hedgehog","p":0.0893,"because":"the whole thing turns on one factor, and it points no","brier":0.8294,"right":false,"seal":"8268d561"},{"panelist":"fox","p":0.42,"because":"several small things lean no; none of them decides it","brier":0.3364,"right":false,"seal":"bcd7d652"},{"panelist":"parrot","p":0.769,"because":"the base rate for this class of question is 77%","brier":0.0534,"right":true,"seal":"e54d7f71"},{"panelist":"drunk","p":0.3976,"because":"no reason","brier":0.3629,"right":false,"seal":"1ff226b6"}]}]};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Every value drawn below comes out of DATA, which `scripts/viz.ts` extracts
+// from a settled ledger. Nothing on this page is typed in by hand, which is the
+// only reason a page like this is worth looking at.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const P    = (n) => DATA.panelists.find((x) => x.panelist === n);
+const HOG  = P("hedgehog");
+const FOX  = P("fox");
+const BASE = P("base");
+const COIN = P("coin");
+
+const pct  = (x, d = 1) => (x * 100).toFixed(d) + "%";
+const pts  = (x, d = 1) => (x >= 0 ? "+" : "") + (x * 100 + 0).toFixed(d);
+const sc   = (x) => x.toFixed(4);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+const $ = (id) => document.getElementById(id);
+
+const SVGNS = "http://www.w3.org/2000/svg";
+const el = (name, attrs = {}) => {
+  const n = document.createElementNS(SVGNS, name);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+  return n;
+};
+
+// ── static chrome ────────────────────────────────────────────────────────────
+
+$("tagline").textContent =
+  "a prediction ledger · seed " + DATA.seed + " · " + DATA.questions + " questions · " +
+  DATA.panel.length + " forecasters · " + DATA.baselines.length +
+  " baselines that know nothing · offline almanac";
+
+$("chainline").innerHTML =
+  '<span class="num">' + DATA.records + "</span> records &nbsp;·&nbsp; head " +
+  '<span class="num">' + DATA.head.slice(0, 12) + "</span>";
+
+const STATIONS = [
+  ["ASK",    "only if a rule can settle it"],
+  ["SEAL",   "before the answer exists"],
+  ["WAIT",   "no edits, no deletes"],
+  ["SETTLE", "read the source, apply the test"],
+  ["SCORE",  "proper rules only"],
+];
+$("stations").innerHTML = STATIONS.map(([n, s]) =>
+  '<div class="station"><div class="dot"></div><div class="name">' + n +
+  '</div><div class="sub">' + s + "</div></div>").join("");
+const stationEls = [...document.querySelectorAll(".station")];
+
+const COUNTERS = [
+  ["asked",   "questions asked"],
+  ["sealed",  "forecasts sealed"],
+  ["settled", "settled from source"],
+  ["edited",  "records edited"],
+];
+$("counters").innerHTML = COUNTERS.map(([k, label]) =>
+  '<div class="counter"><div class="v num" id="c-' + k + '">0</div><div class="k">' + label + "</div></div>").join("");
+
+// ── the scoreboard, sorted the way the CLI sorts it ──────────────────────────
+
+const BASE_SET = new Set(DATA.baselines);
+const board = [...DATA.panelists].sort((a, b) => a.brier - b.brier);
+const best = board.find((p) => !BASE_SET.has(p.panelist));
+$("board").innerHTML = board.map((p) => {
+  const dash = p.gap === 0 && p.meanConfidence === 0.5;
+  return '<tr class="' + (BASE_SET.has(p.panelist) ? "base" : "") + (p === best ? " lead" : "") + '">' +
+    "<td>" + p.panelist + "</td>" +
+    '<td class="r num">' + sc(p.brier) + "</td>" +
+    '<td class="r num">' + p.log.toFixed(3) + "</td>" +
+    '<td class="r num">' + (dash ? "—" : pct(p.meanConfidence)) + "</td>" +
+    '<td class="r num">' + (dash ? "—" : pct(p.accuracy)) + "</td>" +
+    '<td class="r num' + (p.gap > 0.05 ? " mark" : "") + '">' + (dash ? "—" : pts(p.gap)) + "</td>" +
+    '<td class="r num' + (p.skillPct < 0 ? " mark" : "") + '">' + (p.skillPct >= 0 ? "+" : "") + p.skillPct.toFixed(1) + "%</td>" +
+    "</tr>";
+}).join("");
+
+// The line worth reading off this table is not who won. It is that the winner
+// is whichever forecaster had the least to say, so the sentence is built from
+// the numbers rather than asserted.
+const loudest = [...DATA.panelists].sort((a, b) => b.gap - a.gap).find((p) => !BASE_SET.has(p.panelist));
+$("boardnote").innerHTML =
+  "the panel's best score belongs to <b class=\"mark\">" + best.panelist +
+  "</b>, which answers the base rate and nothing else — " + sc(best.brier) +
+  ". the most confident forecaster, <b>" + loudest.panelist + "</b>, finished " +
+  (((loudest.brier - best.brier) / best.brier) * 100).toFixed(0) +
+  "% worse. <span class=\"muted\">said = mean stated confidence, folded to the side taken · " +
+  "gap = overconfidence, in points · skill = share of the base rate's error removed, and it goes negative.</span>";
+
+// ── what the ledger will not do ──────────────────────────────────────────────
+//
+// Each of these is a throw in the source, not a paragraph in a README:
+// store.ts refuses the first three, question.ts refuses the fourth.
+
+$("refuse").innerHTML = [
+  ["a forecast sealed after the question settled", "the whole point of the chain is that this is impossible after the fact"],
+  ["a settlement for a question nobody answered", "otherwise a record only holds the questions the panel happened to get right"],
+  ["a second answer from the same forecaster", "one question, one seal, one score"],
+  ["a question no rule can settle", '"significant", "soon", "meaningfully" — a question that cannot be graded is not asked'],
+].map(([a, b]) => "<li><b>" + a + "</b><br>" + b + "</li>").join("");
+
+// ── gauges ───────────────────────────────────────────────────────────────────
+//
+// One chroma: the arc is yellow only where the reading is a miss. A gauge
+// sitting in a good place is drawn in plain grey, because being right is not
+// the news.
+
+const A0 = -122, A1 = 122;
+const polar = (cx, cy, r, deg) => {
+  const a = ((deg - 90) * Math.PI) / 180;
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+};
+const arcPath = (cx, cy, r, a0, a1) => {
+  const [x0, y0] = polar(cx, cy, r, a0);
+  const [x1, y1] = polar(cx, cy, r, a1);
+  return "M" + x0 + " " + y0 + " A" + r + " " + r + " 0 " + (a1 - a0 > 180 ? 1 : 0) + " 1 " + x1 + " " + y1;
+};
+
+const GAUGES = [
+  {
+    key: "ece",
+    label: "calibration error",
+    lo: 0, hi: 0.5,
+    value: HOG.ece,
+    read: (v) => pct(v),
+    sub: "average distance between what it said and what happened",
+    bad: (v) => v > 0.05,
+  },
+  {
+    key: "gap",
+    label: "overconfidence",
+    lo: 0, hi: 0.5,
+    value: HOG.gap,
+    read: (v) => pts(v) + " pts",
+    sub: "said " + pct(HOG.meanConfidence) + " · right " + pct(HOG.accuracy),
+    bad: (v) => v > 0.05,
+  },
+  {
+    key: "brier",
+    label: "brier",
+    lo: 0, hi: 0.5,
+    value: HOG.brier,
+    read: (v) => sc(v),
+    tick: COIN.brier,
+    tickLabel: "coin",
+    sub: "0 perfect · " + sc(COIN.brier) + " a coin · 1 confidently wrong",
+    bad: (v) => v > COIN.brier,
+  },
+  {
+    key: "skill",
+    label: "skill vs base rate",
+    lo: -1, hi: 0.5,
+    value: HOG.skillPct / 100,
+    read: (v) => pts(v, 1) + "%",
+    tick: 0,
+    tickLabel: "0",
+    sub: "share of the base rate's error removed",
+    bad: (v) => v < 0,
+  },
+];
+
+$("gauges").innerHTML = GAUGES.map((g) =>
+  '<div class="gauge"><svg viewBox="0 0 150 108" id="gauge-' + g.key + '"></svg>' +
+  '<div class="g-k">' + g.label + '</div><div class="g-s" id="sub-' + g.key + '">' + g.sub + "</div></div>").join("");
+
+function drawGauge(g, shown) {
+  const svg = $("gauge-" + g.key);
+  svg.textContent = "";
+  const cx = 75, cy = 76, r = 52;
+  const t = (v) => clamp((v - g.lo) / (g.hi - g.lo), 0, 1);
+  const ang = (v) => lerp(A0, A1, t(v));
+
+  svg.appendChild(el("path", { d: arcPath(cx, cy, r, A0, A1), fill: "none", stroke: "#2C2C2C", "stroke-width": 6 }));
+
+  for (let i = 0; i <= 10; i++) {
+    const a = lerp(A0, A1, i / 10);
+    const [x0, y0] = polar(cx, cy, r - 11, a);
+    const [x1, y1] = polar(cx, cy, r - (i % 5 === 0 ? 17 : 14), a);
+    svg.appendChild(el("line", { x1: x0, y1: y0, x2: x1, y2: y1, stroke: "#2C2C2C", "stroke-width": 1 }));
+  }
+
+  const a = ang(shown);
+  const bad = g.bad(shown);
+  if (Math.abs(a - A0) > 0.4) {
+    svg.appendChild(el("path", {
+      d: arcPath(cx, cy, r, A0, a), fill: "none",
+      stroke: bad ? "#FFE10A" : "#8A8A82", "stroke-width": 6,
+    }));
+  }
+
+  if (g.tick !== undefined) {
+    const ta = ang(g.tick);
+    const [tx0, ty0] = polar(cx, cy, r + 6, ta);
+    const [tx1, ty1] = polar(cx, cy, r - 10, ta);
+    svg.appendChild(el("line", { x1: tx0, y1: ty0, x2: tx1, y2: ty1, stroke: "#E9E9E4", "stroke-width": 1 }));
+    const [lx, ly] = polar(cx, cy, r + 14, ta);
+    const lbl = el("text", { x: lx, y: ly, fill: "#8A8A82", "font-size": 8, "text-anchor": ta < 0 ? "end" : "start", "font-family": "inherit" });
+    lbl.textContent = g.tickLabel;
+    svg.appendChild(lbl);
+  }
+
+  const [nx, ny] = polar(cx, cy, r - 9, a);
+  const [bx, by] = polar(cx, cy, 8, a + 180);
+  svg.appendChild(el("line", { x1: bx, y1: by, x2: nx, y2: ny, stroke: bad ? "#FFE10A" : "#E9E9E4", "stroke-width": 1.5 }));
+  svg.appendChild(el("circle", { cx, cy, r: 2.5, fill: bad ? "#FFE10A" : "#E9E9E4" }));
+
+  const v = el("text", { x: cx, y: cy + 26, fill: "#E9E9E4", "font-size": 17, "text-anchor": "middle", "font-family": "inherit" });
+  v.textContent = g.read(shown);
+  svg.appendChild(v);
+}
+
+// ── the two charts ───────────────────────────────────────────────────────────
+
+const PAD = { l: 48, r: 14, t: 12, b: 20 };
+
+// A running average over four questions is noise, not a score. The charts start
+// where the number starts meaning something, and say so on the axis.
+const SKIP = 4;
+const seen = (curve, upto) => curve.slice(SKIP, Math.max(SKIP + 2, upto));
+
+function axis(svg, W, H, ticks, fmt) {
+  for (const t of ticks) {
+    const y = t.y;
+    svg.appendChild(el("line", { x1: PAD.l, y1: y, x2: W - PAD.r, y2: y, stroke: t.strong ? "#2C2C2C" : "#141414", "stroke-width": 1, "stroke-dasharray": t.dash || "none" }));
+    const lab = el("text", { x: PAD.l - 7, y: y + 3.5, fill: "#8A8A82", "font-size": 9, "text-anchor": "end", "font-family": "inherit" });
+    lab.textContent = t.label;
+    svg.appendChild(lab);
+  }
+}
+
+function drawGapChart(upto) {
+  const svg = $("gap");
+  svg.textContent = "";
+  const W = 620, H = 180;
+  const c = seen(HOG.curve, upto);
+  const N = HOG.curve.length - SKIP;
+  const x = (i) => PAD.l + ((W - PAD.l - PAD.r) * i) / (N - 1);
+  const y = (v) => PAD.t + (H - PAD.t - PAD.b) * (1 - (clamp(v, 0.5, 1) - 0.5) / 0.5); // 50%..100%
+
+  axis(svg, W, H, [
+    { y: y(1.0), label: "100%" },
+    { y: y(0.9), label: "90%" },
+    { y: y(0.75), label: "75%" },
+    { y: y(0.6), label: "60%" },
+    { y: y(0.5), label: "50%", strong: true, dash: "2 3" },
+  ]);
+
+  // The band between the two lines is the gap, and it is the point of the chart.
+  const band = c.map((p, i) => x(i) + "," + y(p.said)).join(" ") + " " +
+               c.map((p, i) => x(c.length - 1 - i) + "," + y(c[c.length - 1 - i].right)).join(" ");
+  svg.appendChild(el("polygon", { points: band, fill: "rgba(255,225,10,0.10)", stroke: "none" }));
+
+  svg.appendChild(el("polyline", { points: c.map((p, i) => x(i) + "," + y(p.said)).join(" "), fill: "none", stroke: "#E9E9E4", "stroke-width": 1.4 }));
+  svg.appendChild(el("polyline", { points: c.map((p, i) => x(i) + "," + y(p.right)).join(" "), fill: "none", stroke: "#FFE10A", "stroke-width": 1.6 }));
+
+  const last = c[c.length - 1];
+  for (const [v, col] of [[last.said, "#E9E9E4"], [last.right, "#FFE10A"]]) {
+    svg.appendChild(el("circle", { cx: x(c.length - 1), cy: y(v), r: 2.4, fill: col }));
+  }
+
+  const a = el("text", { x: PAD.l, y: H - 5, fill: "#55554F", "font-size": 9, "font-family": "inherit" });
+  a.textContent = "question " + (SKIP + 1);
+  svg.appendChild(a);
+  const n = el("text", { x: W - PAD.r, y: H - 5, fill: "#8A8A82", "font-size": 9, "text-anchor": "end", "font-family": "inherit" });
+  n.textContent = "question " + (c.length + SKIP) + " of " + HOG.curve.length;
+  svg.appendChild(n);
+}
+
+function drawRunChart(upto) {
+  const svg = $("run");
+  svg.textContent = "";
+  const W = 620, H = 150;
+  const N = HOG.curve.length - SKIP;
+  const x = (i) => PAD.l + ((W - PAD.l - PAD.r) * i) / (N - 1);
+  const y = (v) => PAD.t + (H - PAD.t - PAD.b) * (1 - (clamp(v, 0.15, 0.40) - 0.15) / 0.25);
+
+  axis(svg, W, H, [
+    { y: y(0.40), label: "0.40" },
+    { y: y(0.35), label: "0.35" },
+    { y: y(COIN.brier), label: sc(COIN.brier), strong: true, dash: "2 3" },
+    { y: y(0.20), label: "0.20" },
+  ]);
+
+  const series = [
+    { p: HOG,  col: "#FFE10A", w: 1.6 },
+    { p: FOX,  col: "#8A8A82", w: 1.2 },
+    { p: BASE, col: "#43433C", w: 1.2 },
+  ];
+  for (const s of series) {
+    const c = seen(s.p.curve, upto);
+    svg.appendChild(el("polyline", {
+      points: c.map((p, i) => x(i) + "," + y(p.brier)).join(" "),
+      fill: "none", stroke: s.col, "stroke-width": s.w,
+    }));
+    if (c.length > N * 0.14) {
+      const t = el("text", { x: x(c.length - 1) - 4, y: y(c[c.length - 1].brier) - 6, fill: s.col, "font-size": 9, "text-anchor": "end", "font-family": "inherit" });
+      t.textContent = s.p.panelist;
+      svg.appendChild(t);
+    }
+  }
+
+}
+
+$("runlegend").innerHTML =
+  '<span style="color:var(--accent)"><i></i>hedgehog ' + sc(HOG.brier) + "</span>" +
+  '<span style="color:var(--muted)"><i></i>fox ' + sc(FOX.brier) + "</span>" +
+  '<span style="color:#3E3E38"><i></i>base rate ' + sc(BASE.brier) + "</span>" +
+  '<span class="muted">coin ' + sc(COIN.brier) + " · a forecaster below the coin line is worth its keep</span>";
+
+// ── reliability rows ─────────────────────────────────────────────────────────
+
+/**
+ * Every instrument reads the ledger as it stood after `n` settled questions.
+ * Nothing is eased towards a final value it has not earned yet: a needle that
+ * moves is a number that moved.
+ */
+function gaugesAt(n, final = false) {
+  const i = clamp(n, 1, HOG.curve.length) - 1;
+  const h = HOG.curve[i];
+  const b = BASE.curve[i];
+  const live = {
+    ece: h.ece,
+    gap: h.said - h.right,
+    brier: h.brier,
+    skill: b.brier > 0 ? (b.brier - h.brier) / b.brier : 0,
+  };
+  // At the end of the run the instruments read the scorecard itself rather than
+  // the running approximation, so a still of this page and `brier score` agree
+  // to the last digit.
+  for (const g of GAUGES) drawGauge(g, final ? g.value : live[g.key]);
+
+  // The instruments read one forecaster at one moment, and they say which.
+  $("instcap").textContent = "hedgehog · " + (i + 1) + " settled question" + (i ? "s" : "");
+  $("sub-gap").textContent = final
+    ? "said " + pct(HOG.meanConfidence) + " · right " + pct(HOG.accuracy)
+    : "said " + pct(h.said) + " · right " + pct(h.right);
+}
+
+function drawRel() {
+  const rows = HOG.bins;
+  $("rel").innerHTML = rows.map((b) => {
+    const drift = b.stated - b.observed;
+    const note = Math.abs(drift) < 0.05
+      ? '<span class="muted">on the line</span>'
+      : (Math.abs(drift) * 100).toFixed(0) + " pts " + (drift > 0 ? "high" : "low");
+    const W = 300, H = 16;
+    const px = (v) => 2 + (W - 4) * v;
+    const svg =
+      '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none">' +
+      '<line x1="2" y1="8" x2="' + (W - 2) + '" y2="8" stroke="#2C2C2C" stroke-width="1" stroke-dasharray="1 5"/>' +
+      '<line x1="' + px(b.stated) + '" y1="1" x2="' + px(b.stated) + '" y2="15" stroke="#E9E9E4" stroke-width="1.5"/>' +
+      '<line x1="' + Math.min(px(b.stated), px(b.observed)) + '" y1="8" x2="' + Math.max(px(b.stated), px(b.observed)) + '" y2="8" stroke="#FFE10A" stroke-width="1" opacity="0.45"/>' +
+      '<circle cx="' + px(b.observed) + '" cy="8" r="3.5" fill="#FFE10A"/></svg>';
+    return "<tr><td>" + pct(b.stated) + '</td><td class="mark">' + pct(b.observed) +
+      '</td><td class="r-n">' + b.n + '</td><td class="r-bar">' + svg +
+      '</td><td class="r-note">' + note + "</td></tr>";
+  }).join("");
+}
+drawRel();
+$("boardcap").textContent = "every forecaster · the same " + DATA.questions + " questions";
+$("relcap").textContent = "hedgehog · all " + DATA.questions + " questions";
+
+// ── the walkthrough ──────────────────────────────────────────────────────────
+
+let shownQ = -1;
+function showQuestion(k) {
+  if (k === shownQ) return;
+  shownQ = k;
+  const q = DATA.walkthrough[k];
+  $("qid").textContent = q.id;
+  $("qdates").textContent = "asked " + q.askedOn + "  →  resolves " + q.resolvesOn;
+  $("qtext").textContent = q.text;
+  $("qmeta").innerHTML =
+    "base rate <span>" + (q.baseRate === null ? "—" : pct(q.baseRate)) + "</span>" +
+    " &nbsp;·&nbsp; settles from <span>" + q.source + "</span>" +
+    " &nbsp;·&nbsp; test <span>" + q.test + "</span>";
+  $("seals").innerHTML = q.forecasts.map((f) =>
+    '<tr><td class="who">' + f.panelist + '</td><td class="p num">' + pct(f.p) +
+    '</td><td class="why">' + f.because + '</td><td class="seal num">⛓ ' + f.seal +
+    '</td><td class="res num"></td></tr>').join("");
+  $("settleline").classList.remove("in");
+  $("scoreline").classList.remove("in");
+  $("settleline").innerHTML =
+    '<span class="tag">SETTLE</span>' + q.source + " @ " + q.resolvesOn +
+    ' → <span class="mark num">' + q.reading + "</span>" +
+    ' &nbsp; test <span class="muted">' + q.test + "</span> → " +
+    '<b class="' + (q.outcome ? "yes" : "no") + '">' + (q.outcome ? "YES" : "NO") + "</b>";
+  $("scoreline").innerHTML =
+    '<span class="tag">SCORE</span>' +
+    q.forecasts.map((f) =>
+      f.panelist + " <span class=\"" + (f.right ? "muted" : "mark") + '">' + sc(f.brier) + "</span>").join(" &nbsp; ") +
+    ' <span class="muted">&nbsp; (p − outcome)², lower is better</span>';
+}
+
+function revealSeals(n) {
+  const rows = [...document.querySelectorAll("#seals tr")];
+  rows.forEach((r, i) => r.classList.toggle("in", i < n));
+}
+
+function markResults(on) {
+  const q = DATA.walkthrough[shownQ];
+  [...document.querySelectorAll("#seals tr")].forEach((r, i) => {
+    const cell = r.querySelector(".res");
+    if (!cell) return;
+    cell.innerHTML = on
+      ? (q.forecasts[i].right ? '<span class="muted">held</span>' : '<span class="mark">missed</span>')
+      : "";
+  });
+}
+
+/** Once the walk is over the last record stays on screen, fully scored. */
+function holdLastRecord() {
+  showQuestion(DATA.walkthrough.length - 1);
+  revealSeals(99);
+  $("settleline").classList.add("in");
+  $("scoreline").classList.add("in");
+  markResults(true);
+}
+
+// ── the clock ────────────────────────────────────────────────────────────────
+
+const STAGE = 0.62;                        // seconds per station
+const PER_Q = STAGE * 5;                   // one full lap
+const LAPS  = DATA.walkthrough.length;     // real records walked one at a time
+const T_LOOP = LAPS * PER_Q;               // phase A
+const T_RUN  = 9;                          // phase B: the remaining questions
+const T_HOLD = 8;                          // phase C: the verdict, held
+const TOTAL  = T_LOOP + T_RUN + T_HOLD;
+
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const FROZEN = (() => {
+  const m = /[?&]t=([\d.]+)/.exec(location.search);
+  return m ? parseFloat(m[1]) : REDUCED ? TOTAL - 2 : null;
+})();
+
+function setStations(active, done) {
+  stationEls.forEach((s, i) => {
+    s.classList.toggle("on", i === active);
+    s.classList.toggle("done", i < active || done);
+  });
+  const frac = done ? 1 : clamp((active + 0.5) / 5, 0, 1);
+  $("railfill").style.width = frac * 90 + "%";
+}
+
+function counters(asked, sealed, settled) {
+  $("c-asked").textContent = asked;
+  $("c-sealed").textContent = sealed;
+  $("c-settled").textContent = settled;
+  $("c-edited").textContent = "0";
+}
+
+function frame(t) {
+  const mm = String(Math.floor(t / 60)).padStart(2, "0");
+  const ss = String(Math.floor(t % 60)).padStart(2, "0");
+  $("clock").textContent = mm + ":" + ss;
+
+  const perQ = DATA.panelists.filter((p) => ["hedgehog", "fox", "parrot", "drunk"].includes(p.panelist)).length;
+
+  if (t < T_LOOP) {
+    // ── phase A: one real record, station by station ──
+    const k = Math.min(LAPS - 1, Math.floor(t / PER_Q));
+    const within = (t - k * PER_Q) / PER_Q;      // 0..1 across five stations
+    const stage = Math.min(4, Math.floor(within * 5));
+    showQuestion(k);
+    setStations(stage, false);
+
+    const revealed = stage >= 1 ? Math.ceil(clamp(within * 5 - 1, 0, 1) * perQ) : 0;
+    revealSeals(revealed);
+    $("settleline").classList.toggle("in", stage >= 3);
+    $("scoreline").classList.toggle("in", stage >= 4);
+    markResults(stage >= 4);
+
+    const doneQ = k + (stage >= 3 ? 1 : 0);
+    counters(k + 1, k * perQ + revealed, doneQ);
+
+    $("loopstate").textContent = ["asking", "sealing", "waiting", "settling", "scoring"][stage] +
+      " · record " + (k + 1) + " of " + DATA.questions;
+    $("chainstate").textContent = "SEALED";
+
+    const upto = Math.max(2, doneQ);
+    drawGapChart(upto);
+    drawRunChart(upto);
+    gaugesAt(doneQ);
+    $("growthstate").textContent = "question " + (k + 1) + " of " + DATA.questions;
+    $("gapnote").textContent = "";
+    $("verdict").innerHTML = '<span class="muted">nothing is scored until it is settled from a source.</span>';
+    return;
+  }
+
+  if (t < T_LOOP + T_RUN) {
+    // ── phase B: the rest of the run, at speed ──
+    const u = ease(clamp((t - T_LOOP) / T_RUN, 0, 1));
+    const n = Math.round(lerp(LAPS, DATA.questions, u));
+    holdLastRecord();
+    setStations(4, true);
+    $("loopstate").textContent = "settling the rest of the run";
+    $("chainstate").textContent = "SEALED";
+
+    counters(n, n * perQ, n);
+    drawGapChart(Math.max(2, n));
+    drawRunChart(Math.max(2, n));
+
+    gaugesAt(n);
+    $("growthstate").textContent = "question " + n + " of " + DATA.questions;
+    $("gapnote").textContent = "";
+    $("verdict").innerHTML = '<span class="muted">' + n + " settled · " + (n * perQ) + " sealed forecasts graded</span>";
+    return;
+  }
+
+  // ── phase C: the verdict, held ──
+  holdLastRecord();
+  setStations(4, true);
+  $("loopstate").textContent = "the run, complete";
+  $("chainstate").textContent = DATA.intact ? "INTACT" : "BROKEN";
+  counters(DATA.questions, DATA.questions * perQ, DATA.questions);
+  drawGapChart(DATA.questions);
+  drawRunChart(DATA.questions);
+  gaugesAt(DATA.questions, true);
+  $("growthstate").textContent = "all " + DATA.questions + " questions";
+  $("gapnote").textContent =
+    "The white line is what it claimed. The yellow line is what the world paid. " +
+    DATA.questions + " questions in, they have not met.";
+  $("verdict").innerHTML =
+    '<span class="big">the most confident forecaster on the panel said <b class="num">' +
+    pct(HOG.meanConfidence) + '</b> and was right <b class="num mark">' + pct(HOG.accuracy) +
+    '</b> of the time.</span> <span class="muted">a ' + pts(HOG.gap).replace("+", "") +
+    "-point gap, across " + DATA.questions +
+    " questions sealed before their answers existed, with nothing edited after the fact.</span>";
+}
+
+let t0 = null;
+function tick(now) {
+  if (t0 === null) t0 = now;
+  frame(((now - t0) / 1000) % TOTAL);
+  requestAnimationFrame(tick);
+}
+
+if (FROZEN !== null) frame(clamp(FROZEN, 0, TOTAL - 0.01));
+else requestAnimationFrame(tick);
+</script>

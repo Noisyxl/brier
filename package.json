@@ -25,6 +25,9 @@
     "start": "tsx src/cli.ts",
     "doctor": "tsx src/cli.ts doctor",
     "demo": "tsx src/cli.ts demo",
+    "viz": "tsx scripts/viz.ts && node scripts/viz-page.mjs",
+    "viz:shot": "python3 scripts/viz-shot.py",
+    "viz:video": "python3 scripts/viz-video.py",
     "build": "tsc -p tsconfig.json",
     "test": "node --import tsx --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"

@@ -1,0 +1,902 @@
+<title>The Brier Loop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root {
+    --ground: #000000;
+    --panel:  #0D0D0D;
+    --sunk:   #141414;
+    --line:   #2C2C2C;
+    --text:   #E9E9E4;
+    --muted:  #8A8A82;
+    --accent: #FFE10A;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stage {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 26px 30px 22px;
+  }
+
+  .muted  { color: var(--muted); }
+  .mark   { color: var(--accent); }
+  .num    { font-variant-numeric: tabular-nums; }
+
+  /* ── header ──────────────────────────────────────────────────────────── */
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 16px;
+  }
+
+  .wordmark {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    line-height: 1;
+    margin: 0;
+  }
+  .wordmark .sigma { color: var(--accent); }
+
+  .tagline { color: var(--muted); margin-top: 8px; font-size: 12px; letter-spacing: 0.04em; }
+
+  .chainbar { text-align: right; font-size: 12px; color: var(--muted); }
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+  .clock { color: var(--text); }
+
+  /* ── grid ────────────────────────────────────────────────────────────── */
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+    gap: 18px;
+    margin-top: 18px;
+  }
+  .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 16px 18px 18px;
+    min-width: 0;
+  }
+
+  .cap {
+    font-size: 10px;
+    letter-spacing: 0.20em;
+    color: var(--muted);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .cap b { color: var(--text); font-weight: 400; letter-spacing: 0.20em; }
+
+  /* ── the rail ────────────────────────────────────────────────────────── */
+
+  .rail { position: relative; padding: 4px 0 2px; }
+  .railline {
+    position: absolute;
+    left: 5%; right: 5%;
+    top: 11px;
+    height: 1px;
+    background: var(--line);
+  }
+  .railfill {
+    position: absolute;
+    left: 5%;
+    top: 11px;
+    height: 1px;
+    background: var(--accent);
+    width: 0;
+    transition: width .45s cubic-bezier(.4,0,.2,1);
+  }
+  .stations { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); }
+  .station { text-align: center; }
+  .dot {
+    width: 9px; height: 9px;
+    margin: 7px auto 0;
+    border: 1px solid var(--line);
+    background: var(--ground);
+    transform: rotate(45deg);
+    transition: background .2s, border-color .2s, box-shadow .2s;
+  }
+  .station.on .dot { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255,225,10,.10); }
+  .station.done .dot { background: var(--line); border-color: var(--line); }
+  .station .name {
+    margin-top: 10px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    transition: color .2s;
+  }
+  .station.on .name { color: var(--accent); }
+  .station.done .name { color: var(--text); }
+  .station .sub { font-size: 10px; color: var(--line); margin-top: 3px; line-height: 1.35; }
+  .station.on .sub, .station.done .sub { color: var(--muted); }
+
+  /* ── the record ──────────────────────────────────────────────────────── */
+
+  .record { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; min-height: 236px; }
+
+  .qhead { display: flex; justify-content: space-between; gap: 16px; font-size: 11px; color: var(--muted); }
+  .qtext { margin: 8px 0 6px; font-size: 15px; line-height: 1.45; }
+  .qmeta { font-size: 11px; color: var(--muted); }
+  .qmeta span { color: var(--text); }
+
+  table.seals { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 12px; }
+  table.seals td { padding: 4px 0; border-bottom: 1px solid var(--sunk); vertical-align: baseline; }
+  table.seals tr { opacity: 0; transform: translateY(3px); transition: opacity .25s, transform .25s; }
+  table.seals tr.in { opacity: 1; transform: none; }
+  table.seals td.who { width: 84px; color: var(--text); padding-right: 10px; white-space: nowrap; }
+  table.seals td.p   { width: 62px; text-align: right; padding-right: 18px; white-space: nowrap; }
+  table.seals td.why { color: var(--muted); }
+  table.seals td.seal { width: 96px; text-align: right; color: #3E3E38; font-size: 11px; padding-left: 14px; white-space: nowrap; }
+  table.seals td.res  { width: 78px; text-align: right; font-size: 11px; padding-left: 12px; white-space: nowrap; }
+
+  .line-settle, .line-score {
+    margin-top: 12px; font-size: 12px;
+    opacity: 0; transition: opacity .3s;
+  }
+  .line-settle.in, .line-score.in { opacity: 1; }
+  .tag {
+    display: inline-block; border: 1px solid var(--line); color: var(--muted);
+    padding: 0 6px; font-size: 10px; letter-spacing: .16em; margin-right: 10px;
+  }
+  .yes { color: var(--text); }
+  .no  { color: var(--text); }
+
+  /* ── scoreboard ──────────────────────────────────────────────────────── */
+
+  table.board { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.board th {
+    font-size: 10px; letter-spacing: .14em; color: var(--muted);
+    text-align: left; font-weight: 400; padding-bottom: 8px; text-transform: uppercase;
+  }
+  table.board th.r, table.board td.r { text-align: right; }
+  table.board td { padding: 4px 0; border-top: 1px solid var(--sunk); }
+  table.board td.r { padding-left: 14px; }
+  table.board tr.base td { color: var(--muted); }
+  table.board tr.lead td:first-child { color: var(--accent); }
+
+  /* ── refusals ────────────────────────────────────────────────────────── */
+
+  ul.refuse { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+  ul.refuse li { padding: 6px 0 6px 22px; border-top: 1px solid var(--sunk); position: relative; color: var(--muted); }
+  ul.refuse li:first-child { border-top: 0; }
+  ul.refuse li::before { content: "✕"; position: absolute; left: 0; color: var(--accent); }
+  ul.refuse b { color: var(--text); font-weight: 400; }
+
+  .counters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .counter .v { font-size: 22px; line-height: 1.1; }
+  .counter .k { font-size: 10px; letter-spacing: .16em; color: var(--muted); margin-top: 5px; text-transform: uppercase; }
+
+  /* ── gauges ──────────────────────────────────────────────────────────── */
+
+  .gauges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .gauge { text-align: center; min-width: 0; }
+  .gauge svg { display: block; width: 100%; height: auto; }
+  .gauge .g-k { font-size: 10px; letter-spacing: .16em; color: var(--muted); text-transform: uppercase; }
+  .gauge .g-s { font-size: 10px; color: #55554F; margin-top: 5px; line-height: 1.45; min-height: 42px; }
+
+  /* ── charts ──────────────────────────────────────────────────────────── */
+
+  .chart svg { display: block; width: 100%; height: auto; }
+  .legend { display: flex; gap: 18px; font-size: 11px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 14px; height: 0; border-top: 2px solid currentColor; vertical-align: middle; margin-right: 6px; }
+
+  .note { font-size: 11px; color: var(--muted); margin-top: 10px; }
+
+  /* ── reliability ─────────────────────────────────────────────────────── */
+
+  table.rel { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.rel th { font-size: 10px; letter-spacing: .14em; color: var(--muted); text-align: left; font-weight: 400; padding-bottom: 8px; text-transform: uppercase; }
+  table.rel td { padding: 5px 0; border-top: 1px solid var(--sunk); vertical-align: middle; }
+  table.rel .r-n { color: var(--muted); text-align: right; width: 42px; padding-right: 14px; }
+  table.rel .r-bar { width: 46%; }
+  table.rel .r-note { text-align: right; font-size: 11px; color: var(--muted); white-space: nowrap; }
+  table.rel svg { display: block; width: 100%; height: 16px; }
+
+  /* ── footer ──────────────────────────────────────────────────────────── */
+
+  footer {
+    margin-top: 18px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .verdict { font-size: 15px; }
+  .verdict .big { font-size: 19px; letter-spacing: .01em; }
+  .cmd { font-size: 12px; color: var(--muted); }
+  .cmd code { color: var(--text); background: var(--sunk); border: 1px solid var(--line); padding: 2px 7px; }
+
+  @media (max-width: 1080px) {
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    .gauges { grid-template-columns: repeat(2, 1fr); }
+    .station .sub { display: none; }
+  }
+  @media (max-width: 620px) {
+    .stage { padding: 18px 14px; }
+    .counters { grid-template-columns: repeat(2, 1fr); }
+    td.why, td.seal { display: none; }
+  }
+</style>
+
+<div class="stage">
+
+  <header>
+    <div>
+      <h1 class="wordmark">BRIER<span class="sigma">.</span></h1>
+      <div class="tagline" id="tagline"></div>
+    </div>
+    <div class="chainbar">
+      <span class="badge" id="chainstate">SEALED</span>
+      <div style="margin-top:8px" id="chainline"></div>
+      <div style="margin-top:2px">elapsed <span class="clock num" id="clock">00:00</span></div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ══ left column: the loop, one real record at a time ══ -->
+    <div class="col">
+      <section class="card">
+        <div class="cap"><b>THE LOOP</b><span id="loopstate">one question, end to end</span></div>
+
+        <div class="rail">
+          <div class="railline"></div>
+          <div class="railfill" id="railfill"></div>
+          <div class="stations" id="stations"></div>
+        </div>
+
+        <div class="record">
+          <div class="qhead">
+            <span id="qid" class="muted"></span>
+            <span id="qdates" class="muted"></span>
+          </div>
+          <div class="qtext" id="qtext">&nbsp;</div>
+          <div class="qmeta" id="qmeta"></div>
+
+          <table class="seals"><tbody id="seals"></tbody></table>
+
+          <div class="line-settle" id="settleline"></div>
+          <div class="line-score" id="scoreline"></div>
+        </div>
+
+        <div class="counters" id="counters"></div>
+      </section>
+
+      <section class="card">
+        <div class="cap"><b>SCOREBOARD</b><span id="boardcap"></span></div>
+        <table class="board"><thead><tr>
+          <th>forecaster</th><th class="r">brier</th><th class="r">log</th>
+          <th class="r">said</th><th class="r">right</th><th class="r">gap</th><th class="r">skill</th>
+        </tr></thead><tbody id="board"></tbody></table>
+        <div class="note" id="boardnote"></div>
+      </section>
+
+      <section class="card">
+        <div class="cap"><b>WHAT THE LEDGER REFUSES</b><span>enforced in code, not in a policy</span></div>
+        <ul class="refuse" id="refuse"></ul>
+      </section>
+    </div>
+
+    <!-- ══ right column: instruments ══ -->
+    <div class="col">
+
+      <section class="card">
+        <div class="cap"><b>INSTRUMENTS</b><span id="instcap"></span></div>
+        <div class="gauges" id="gauges"></div>
+      </section>
+
+      <section class="card chart">
+        <div class="cap"><b>WHAT IT SAID · WHAT HAPPENED</b><span id="growthstate"></span></div>
+        <svg id="gap" viewBox="0 0 620 180" preserveAspectRatio="none" aria-label="stated confidence against realised accuracy"></svg>
+        <div class="legend">
+          <span style="color:var(--text)"><i></i>stated confidence</span>
+          <span style="color:var(--accent)"><i></i>how often that side won</span>
+          <span class="muted">the band between them is the gap</span>
+        </div>
+        <div class="note" id="gapnote"></div>
+      </section>
+
+      <section class="card chart">
+        <div class="cap"><b>RUNNING BRIER</b><span>lower is better · 0.25 is a coin</span></div>
+        <svg id="run" viewBox="0 0 620 150" preserveAspectRatio="none" aria-label="running Brier score by question"></svg>
+        <div class="legend" id="runlegend"></div>
+      </section>
+
+      <section class="card">
+        <div class="cap"><b>RELIABILITY</b><span id="relcap"></span></div>
+        <table class="rel">
+          <thead><tr><th>stated</th><th>observed</th><th class="r-n">n</th><th class="r-bar">0% &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 100%</th><th class="r-note">drift</th></tr></thead>
+          <tbody id="rel"></tbody>
+        </table>
+        <div class="note">│ stated · ● observed · a dot left of the line is a claim the world did not pay</div>
+      </section>
+
+    </div>
+  </div>
+
+  <footer>
+    <div class="verdict" id="verdict">&nbsp;</div>
+    <div class="cmd">reproduce · <code>npx brier demo -n 200 --seed 1950 &amp;&amp; npx brier score</code></div>
+  </footer>
+
+</div>
+
+<script>
+const DATA = /*__DATA__*/ null /*__END__*/;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Every value drawn below comes out of DATA, which `scripts/viz.ts` extracts
+// from a settled ledger. Nothing on this page is typed in by hand, which is the
+// only reason a page like this is worth looking at.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const P    = (n) => DATA.panelists.find((x) => x.panelist === n);
+const HOG  = P("hedgehog");
+const FOX  = P("fox");
+const BASE = P("base");
+const COIN = P("coin");
+
+const pct  = (x, d = 1) => (x * 100).toFixed(d) + "%";
+const pts  = (x, d = 1) => (x >= 0 ? "+" : "") + (x * 100 + 0).toFixed(d);
+const sc   = (x) => x.toFixed(4);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+const $ = (id) => document.getElementById(id);
+
+const SVGNS = "http://www.w3.org/2000/svg";
+const el = (name, attrs = {}) => {
+  const n = document.createElementNS(SVGNS, name);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+  return n;
+};
+
+// ── static chrome ────────────────────────────────────────────────────────────
+
+$("tagline").textContent =
+  "a prediction ledger · seed " + DATA.seed + " · " + DATA.questions + " questions · " +
+  DATA.panel.length + " forecasters · " + DATA.baselines.length +
+  " baselines that know nothing · offline almanac";
+
+$("chainline").innerHTML =
+  '<span class="num">' + DATA.records + "</span> records &nbsp;·&nbsp; head " +
+  '<span class="num">' + DATA.head.slice(0, 12) + "</span>";
+
+const STATIONS = [
+  ["ASK",    "only if a rule can settle it"],
+  ["SEAL",   "before the answer exists"],
+  ["WAIT",   "no edits, no deletes"],
+  ["SETTLE", "read the source, apply the test"],
+  ["SCORE",  "proper rules only"],
+];
+$("stations").innerHTML = STATIONS.map(([n, s]) =>
+  '<div class="station"><div class="dot"></div><div class="name">' + n +
+  '</div><div class="sub">' + s + "</div></div>").join("");
+const stationEls = [...document.querySelectorAll(".station")];
+
+const COUNTERS = [
+  ["asked",   "questions asked"],
+  ["sealed",  "forecasts sealed"],
+  ["settled", "settled from source"],
+  ["edited",  "records edited"],
+];
+$("counters").innerHTML = COUNTERS.map(([k, label]) =>
+  '<div class="counter"><div class="v num" id="c-' + k + '">0</div><div class="k">' + label + "</div></div>").join("");
+
+// ── the scoreboard, sorted the way the CLI sorts it ──────────────────────────
+
+const BASE_SET = new Set(DATA.baselines);
+const board = [...DATA.panelists].sort((a, b) => a.brier - b.brier);
+const best = board.find((p) => !BASE_SET.has(p.panelist));
+$("board").innerHTML = board.map((p) => {
+  const dash = p.gap === 0 && p.meanConfidence === 0.5;
+  return '<tr class="' + (BASE_SET.has(p.panelist) ? "base" : "") + (p === best ? " lead" : "") + '">' +
+    "<td>" + p.panelist + "</td>" +
+    '<td class="r num">' + sc(p.brier) + "</td>" +
+    '<td class="r num">' + p.log.toFixed(3) + "</td>" +
+    '<td class="r num">' + (dash ? "—" : pct(p.meanConfidence)) + "</td>" +
+    '<td class="r num">' + (dash ? "—" : pct(p.accuracy)) + "</td>" +
+    '<td class="r num' + (p.gap > 0.05 ? " mark" : "") + '">' + (dash ? "—" : pts(p.gap)) + "</td>" +
+    '<td class="r num' + (p.skillPct < 0 ? " mark" : "") + '">' + (p.skillPct >= 0 ? "+" : "") + p.skillPct.toFixed(1) + "%</td>" +
+    "</tr>";
+}).join("");
+
+// The line worth reading off this table is not who won. It is that the winner
+// is whichever forecaster had the least to say, so the sentence is built from
+// the numbers rather than asserted.
+const loudest = [...DATA.panelists].sort((a, b) => b.gap - a.gap).find((p) => !BASE_SET.has(p.panelist));
+$("boardnote").innerHTML =
+  "the panel's best score belongs to <b class=\"mark\">" + best.panelist +
+  "</b>, which answers the base rate and nothing else — " + sc(best.brier) +
+  ". the most confident forecaster, <b>" + loudest.panelist + "</b>, finished " +
+  (((loudest.brier - best.brier) / best.brier) * 100).toFixed(0) +
+  "% worse. <span class=\"muted\">said = mean stated confidence, folded to the side taken · " +
+  "gap = overconfidence, in points · skill = share of the base rate's error removed, and it goes negative.</span>";
+
+// ── what the ledger will not do ──────────────────────────────────────────────
+//
+// Each of these is a throw in the source, not a paragraph in a README:
+// store.ts refuses the first three, question.ts refuses the fourth.
+
+$("refuse").innerHTML = [
+  ["a forecast sealed after the question settled", "the whole point of the chain is that this is impossible after the fact"],
+  ["a settlement for a question nobody answered", "otherwise a record only holds the questions the panel happened to get right"],
+  ["a second answer from the same forecaster", "one question, one seal, one score"],
+  ["a question no rule can settle", '"significant", "soon", "meaningfully" — a question that cannot be graded is not asked'],
+].map(([a, b]) => "<li><b>" + a + "</b><br>" + b + "</li>").join("");
+
+// ── gauges ───────────────────────────────────────────────────────────────────
+//
+// One chroma: the arc is yellow only where the reading is a miss. A gauge
+// sitting in a good place is drawn in plain grey, because being right is not
+// the news.
+
+const A0 = -122, A1 = 122;
+const polar = (cx, cy, r, deg) => {
+  const a = ((deg - 90) * Math.PI) / 180;
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+};
+const arcPath = (cx, cy, r, a0, a1) => {
+  const [x0, y0] = polar(cx, cy, r, a0);
+  const [x1, y1] = polar(cx, cy, r, a1);
+  return "M" + x0 + " " + y0 + " A" + r + " " + r + " 0 " + (a1 - a0 > 180 ? 1 : 0) + " 1 " + x1 + " " + y1;
+};
+
+const GAUGES = [
+  {
+    key: "ece",
+    label: "calibration error",
+    lo: 0, hi: 0.5,
+    value: HOG.ece,
+    read: (v) => pct(v),
+    sub: "average distance between what it said and what happened",
+    bad: (v) => v > 0.05,
+  },
+  {
+    key: "gap",
+    label: "overconfidence",
+    lo: 0, hi: 0.5,
+    value: HOG.gap,
+    read: (v) => pts(v) + " pts",
+    sub: "said " + pct(HOG.meanConfidence) + " · right " + pct(HOG.accuracy),
+    bad: (v) => v > 0.05,
+  },
+  {
+    key: "brier",
+    label: "brier",
+    lo: 0, hi: 0.5,
+    value: HOG.brier,
+    read: (v) => sc(v),
+    tick: COIN.brier,
+    tickLabel: "coin",
+    sub: "0 perfect · " + sc(COIN.brier) + " a coin · 1 confidently wrong",
+    bad: (v) => v > COIN.brier,
+  },
+  {
+    key: "skill",
+    label: "skill vs base rate",
+    lo: -1, hi: 0.5,
+    value: HOG.skillPct / 100,
+    read: (v) => pts(v, 1) + "%",
+    tick: 0,
+    tickLabel: "0",
+    sub: "share of the base rate's error removed",
+    bad: (v) => v < 0,
+  },
+];
+
+$("gauges").innerHTML = GAUGES.map((g) =>
+  '<div class="gauge"><svg viewBox="0 0 150 108" id="gauge-' + g.key + '"></svg>' +
+  '<div class="g-k">' + g.label + '</div><div class="g-s" id="sub-' + g.key + '">' + g.sub + "</div></div>").join("");
+
+function drawGauge(g, shown) {
+  const svg = $("gauge-" + g.key);
+  svg.textContent = "";
+  const cx = 75, cy = 76, r = 52;
+  const t = (v) => clamp((v - g.lo) / (g.hi - g.lo), 0, 1);
+  const ang = (v) => lerp(A0, A1, t(v));
+
+  svg.appendChild(el("path", { d: arcPath(cx, cy, r, A0, A1), fill: "none", stroke: "#2C2C2C", "stroke-width": 6 }));
+
+  for (let i = 0; i <= 10; i++) {
+    const a = lerp(A0, A1, i / 10);
+    const [x0, y0] = polar(cx, cy, r - 11, a);
+    const [x1, y1] = polar(cx, cy, r - (i % 5 === 0 ? 17 : 14), a);
+    svg.appendChild(el("line", { x1: x0, y1: y0, x2: x1, y2: y1, stroke: "#2C2C2C", "stroke-width": 1 }));
+  }
+
+  const a = ang(shown);
+  const bad = g.bad(shown);
+  if (Math.abs(a - A0) > 0.4) {
+    svg.appendChild(el("path", {
+      d: arcPath(cx, cy, r, A0, a), fill: "none",
+      stroke: bad ? "#FFE10A" : "#8A8A82", "stroke-width": 6,
+    }));
+  }
+
+  if (g.tick !== undefined) {
+    const ta = ang(g.tick);
+    const [tx0, ty0] = polar(cx, cy, r + 6, ta);
+    const [tx1, ty1] = polar(cx, cy, r - 10, ta);
+    svg.appendChild(el("line", { x1: tx0, y1: ty0, x2: tx1, y2: ty1, stroke: "#E9E9E4", "stroke-width": 1 }));
+    const [lx, ly] = polar(cx, cy, r + 14, ta);
+    const lbl = el("text", { x: lx, y: ly, fill: "#8A8A82", "font-size": 8, "text-anchor": ta < 0 ? "end" : "start", "font-family": "inherit" });
+    lbl.textContent = g.tickLabel;
+    svg.appendChild(lbl);
+  }
+
+  const [nx, ny] = polar(cx, cy, r - 9, a);
+  const [bx, by] = polar(cx, cy, 8, a + 180);
+  svg.appendChild(el("line", { x1: bx, y1: by, x2: nx, y2: ny, stroke: bad ? "#FFE10A" : "#E9E9E4", "stroke-width": 1.5 }));
+  svg.appendChild(el("circle", { cx, cy, r: 2.5, fill: bad ? "#FFE10A" : "#E9E9E4" }));
+
+  const v = el("text", { x: cx, y: cy + 26, fill: "#E9E9E4", "font-size": 17, "text-anchor": "middle", "font-family": "inherit" });
+  v.textContent = g.read(shown);
+  svg.appendChild(v);
+}
+
+// ── the two charts ───────────────────────────────────────────────────────────
+
+const PAD = { l: 48, r: 14, t: 12, b: 20 };
+
+// A running average over four questions is noise, not a score. The charts start
+// where the number starts meaning something, and say so on the axis.
+const SKIP = 4;
+const seen = (curve, upto) => curve.slice(SKIP, Math.max(SKIP + 2, upto));
+
+function axis(svg, W, H, ticks, fmt) {
+  for (const t of ticks) {
+    const y = t.y;
+    svg.appendChild(el("line", { x1: PAD.l, y1: y, x2: W - PAD.r, y2: y, stroke: t.strong ? "#2C2C2C" : "#141414", "stroke-width": 1, "stroke-dasharray": t.dash || "none" }));
+    const lab = el("text", { x: PAD.l - 7, y: y + 3.5, fill: "#8A8A82", "font-size": 9, "text-anchor": "end", "font-family": "inherit" });
+    lab.textContent = t.label;
+    svg.appendChild(lab);
+  }
+}
+
+function drawGapChart(upto) {
+  const svg = $("gap");
+  svg.textContent = "";
+  const W = 620, H = 180;
+  const c = seen(HOG.curve, upto);
+  const N = HOG.curve.length - SKIP;
+  const x = (i) => PAD.l + ((W - PAD.l - PAD.r) * i) / (N - 1);
+  const y = (v) => PAD.t + (H - PAD.t - PAD.b) * (1 - (clamp(v, 0.5, 1) - 0.5) / 0.5); // 50%..100%
+
+  axis(svg, W, H, [
+    { y: y(1.0), label: "100%" },
+    { y: y(0.9), label: "90%" },
+    { y: y(0.75), label: "75%" },
+    { y: y(0.6), label: "60%" },
+    { y: y(0.5), label: "50%", strong: true, dash: "2 3" },
+  ]);
+
+  // The band between the two lines is the gap, and it is the point of the chart.
+  const band = c.map((p, i) => x(i) + "," + y(p.said)).join(" ") + " " +
+               c.map((p, i) => x(c.length - 1 - i) + "," + y(c[c.length - 1 - i].right)).join(" ");
+  svg.appendChild(el("polygon", { points: band, fill: "rgba(255,225,10,0.10)", stroke: "none" }));
+
+  svg.appendChild(el("polyline", { points: c.map((p, i) => x(i) + "," + y(p.said)).join(" "), fill: "none", stroke: "#E9E9E4", "stroke-width": 1.4 }));
+  svg.appendChild(el("polyline", { points: c.map((p, i) => x(i) + "," + y(p.right)).join(" "), fill: "none", stroke: "#FFE10A", "stroke-width": 1.6 }));
+
+  const last = c[c.length - 1];
+  for (const [v, col] of [[last.said, "#E9E9E4"], [last.right, "#FFE10A"]]) {
+    svg.appendChild(el("circle", { cx: x(c.length - 1), cy: y(v), r: 2.4, fill: col }));
+  }
+
+  const a = el("text", { x: PAD.l, y: H - 5, fill: "#55554F", "font-size": 9, "font-family": "inherit" });
+  a.textContent = "question " + (SKIP + 1);
+  svg.appendChild(a);
+  const n = el("text", { x: W - PAD.r, y: H - 5, fill: "#8A8A82", "font-size": 9, "text-anchor": "end", "font-family": "inherit" });
+  n.textContent = "question " + (c.length + SKIP) + " of " + HOG.curve.length;
+  svg.appendChild(n);
+}
+
+function drawRunChart(upto) {
+  const svg = $("run");
+  svg.textContent = "";
+  const W = 620, H = 150;
+  const N = HOG.curve.length - SKIP;
+  const x = (i) => PAD.l + ((W - PAD.l - PAD.r) * i) / (N - 1);
+  const y = (v) => PAD.t + (H - PAD.t - PAD.b) * (1 - (clamp(v, 0.15, 0.40) - 0.15) / 0.25);
+
+  axis(svg, W, H, [
+    { y: y(0.40), label: "0.40" },
+    { y: y(0.35), label: "0.35" },
+    { y: y(COIN.brier), label: sc(COIN.brier), strong: true, dash: "2 3" },
+    { y: y(0.20), label: "0.20" },
+  ]);
+
+  const series = [
+    { p: HOG,  col: "#FFE10A", w: 1.6 },
+    { p: FOX,  col: "#8A8A82", w: 1.2 },
+    { p: BASE, col: "#43433C", w: 1.2 },
+  ];
+  for (const s of series) {
+    const c = seen(s.p.curve, upto);
+    svg.appendChild(el("polyline", {
+      points: c.map((p, i) => x(i) + "," + y(p.brier)).join(" "),
+      fill: "none", stroke: s.col, "stroke-width": s.w,
+    }));
+    if (c.length > N * 0.14) {
+      const t = el("text", { x: x(c.length - 1) - 4, y: y(c[c.length - 1].brier) - 6, fill: s.col, "font-size": 9, "text-anchor": "end", "font-family": "inherit" });
+      t.textContent = s.p.panelist;
+      svg.appendChild(t);
+    }
+  }
+
+}
+
+$("runlegend").innerHTML =
+  '<span style="color:var(--accent)"><i></i>hedgehog ' + sc(HOG.brier) + "</span>" +
+  '<span style="color:var(--muted)"><i></i>fox ' + sc(FOX.brier) + "</span>" +
+  '<span style="color:#3E3E38"><i></i>base rate ' + sc(BASE.brier) + "</span>" +
+  '<span class="muted">coin ' + sc(COIN.brier) + " · a forecaster below the coin line is worth its keep</span>";
+
+// ── reliability rows ─────────────────────────────────────────────────────────
+
+/**
+ * Every instrument reads the ledger as it stood after `n` settled questions.
+ * Nothing is eased towards a final value it has not earned yet: a needle that
+ * moves is a number that moved.
+ */
+function gaugesAt(n, final = false) {
+  const i = clamp(n, 1, HOG.curve.length) - 1;
+  const h = HOG.curve[i];
+  const b = BASE.curve[i];
+  const live = {
+    ece: h.ece,
+    gap: h.said - h.right,
+    brier: h.brier,
+    skill: b.brier > 0 ? (b.brier - h.brier) / b.brier : 0,
+  };
+  // At the end of the run the instruments read the scorecard itself rather than
+  // the running approximation, so a still of this page and `brier score` agree
+  // to the last digit.
+  for (const g of GAUGES) drawGauge(g, final ? g.value : live[g.key]);
+
+  // The instruments read one forecaster at one moment, and they say which.
+  $("instcap").textContent = "hedgehog · " + (i + 1) + " settled question" + (i ? "s" : "");
+  $("sub-gap").textContent = final
+    ? "said " + pct(HOG.meanConfidence) + " · right " + pct(HOG.accuracy)
+    : "said " + pct(h.said) + " · right " + pct(h.right);
+}
+
+function drawRel() {
+  const rows = HOG.bins;
+  $("rel").innerHTML = rows.map((b) => {
+    const drift = b.stated - b.observed;
+    const note = Math.abs(drift) < 0.05
+      ? '<span class="muted">on the line</span>'
+      : (Math.abs(drift) * 100).toFixed(0) + " pts " + (drift > 0 ? "high" : "low");
+    const W = 300, H = 16;
+    const px = (v) => 2 + (W - 4) * v;
+    const svg =
+      '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none">' +
+      '<line x1="2" y1="8" x2="' + (W - 2) + '" y2="8" stroke="#2C2C2C" stroke-width="1" stroke-dasharray="1 5"/>' +
+      '<line x1="' + px(b.stated) + '" y1="1" x2="' + px(b.stated) + '" y2="15" stroke="#E9E9E4" stroke-width="1.5"/>' +
+      '<line x1="' + Math.min(px(b.stated), px(b.observed)) + '" y1="8" x2="' + Math.max(px(b.stated), px(b.observed)) + '" y2="8" stroke="#FFE10A" stroke-width="1" opacity="0.45"/>' +
+      '<circle cx="' + px(b.observed) + '" cy="8" r="3.5" fill="#FFE10A"/></svg>';
+    return "<tr><td>" + pct(b.stated) + '</td><td class="mark">' + pct(b.observed) +
+      '</td><td class="r-n">' + b.n + '</td><td class="r-bar">' + svg +
+      '</td><td class="r-note">' + note + "</td></tr>";
+  }).join("");
+}
+drawRel();
+$("boardcap").textContent = "every forecaster · the same " + DATA.questions + " questions";
+$("relcap").textContent = "hedgehog · all " + DATA.questions + " questions";
+
+// ── the walkthrough ──────────────────────────────────────────────────────────
+
+let shownQ = -1;
+function showQuestion(k) {
+  if (k === shownQ) return;
+  shownQ = k;
+  const q = DATA.walkthrough[k];
+  $("qid").textContent = q.id;
+  $("qdates").textContent = "asked " + q.askedOn + "  →  resolves " + q.resolvesOn;
+  $("qtext").textContent = q.text;
+  $("qmeta").innerHTML =
+    "base rate <span>" + (q.baseRate === null ? "—" : pct(q.baseRate)) + "</span>" +
+    " &nbsp;·&nbsp; settles from <span>" + q.source + "</span>" +
+    " &nbsp;·&nbsp; test <span>" + q.test + "</span>";
+  $("seals").innerHTML = q.forecasts.map((f) =>
+    '<tr><td class="who">' + f.panelist + '</td><td class="p num">' + pct(f.p) +
+    '</td><td class="why">' + f.because + '</td><td class="seal num">⛓ ' + f.seal +
+    '</td><td class="res num"></td></tr>').join("");
+  $("settleline").classList.remove("in");
+  $("scoreline").classList.remove("in");
+  $("settleline").innerHTML =
+    '<span class="tag">SETTLE</span>' + q.source + " @ " + q.resolvesOn +
+    ' → <span class="mark num">' + q.reading + "</span>" +
+    ' &nbsp; test <span class="muted">' + q.test + "</span> → " +
+    '<b class="' + (q.outcome ? "yes" : "no") + '">' + (q.outcome ? "YES" : "NO") + "</b>";
+  $("scoreline").innerHTML =
+    '<span class="tag">SCORE</span>' +
+    q.forecasts.map((f) =>
+      f.panelist + " <span class=\"" + (f.right ? "muted" : "mark") + '">' + sc(f.brier) + "</span>").join(" &nbsp; ") +
+    ' <span class="muted">&nbsp; (p − outcome)², lower is better</span>';
+}
+
+function revealSeals(n) {
+  const rows = [...document.querySelectorAll("#seals tr")];
+  rows.forEach((r, i) => r.classList.toggle("in", i < n));
+}
+
+function markResults(on) {
+  const q = DATA.walkthrough[shownQ];
+  [...document.querySelectorAll("#seals tr")].forEach((r, i) => {
+    const cell = r.querySelector(".res");
+    if (!cell) return;
+    cell.innerHTML = on
+      ? (q.forecasts[i].right ? '<span class="muted">held</span>' : '<span class="mark">missed</span>')
+      : "";
+  });
+}
+
+/** Once the walk is over the last record stays on screen, fully scored. */
+function holdLastRecord() {
+  showQuestion(DATA.walkthrough.length - 1);
+  revealSeals(99);
+  $("settleline").classList.add("in");
+  $("scoreline").classList.add("in");
+  markResults(true);
+}
+
+// ── the clock ────────────────────────────────────────────────────────────────
+
+const STAGE = 0.62;                        // seconds per station
+const PER_Q = STAGE * 5;                   // one full lap
+const LAPS  = DATA.walkthrough.length;     // real records walked one at a time
+const T_LOOP = LAPS * PER_Q;               // phase A
+const T_RUN  = 9;                          // phase B: the remaining questions
+const T_HOLD = 8;                          // phase C: the verdict, held
+const TOTAL  = T_LOOP + T_RUN + T_HOLD;
+
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const FROZEN = (() => {
+  const m = /[?&]t=([\d.]+)/.exec(location.search);
+  return m ? parseFloat(m[1]) : REDUCED ? TOTAL - 2 : null;
+})();
+
+function setStations(active, done) {
+  stationEls.forEach((s, i) => {
+    s.classList.toggle("on", i === active);
+    s.classList.toggle("done", i < active || done);
+  });
+  const frac = done ? 1 : clamp((active + 0.5) / 5, 0, 1);
+  $("railfill").style.width = frac * 90 + "%";
+}
+
+function counters(asked, sealed, settled) {
+  $("c-asked").textContent = asked;
+  $("c-sealed").textContent = sealed;
+  $("c-settled").textContent = settled;
+  $("c-edited").textContent = "0";
+}
+
+function frame(t) {
+  const mm = String(Math.floor(t / 60)).padStart(2, "0");
+  const ss = String(Math.floor(t % 60)).padStart(2, "0");
+  $("clock").textContent = mm + ":" + ss;
+
+  const perQ = DATA.panelists.filter((p) => ["hedgehog", "fox", "parrot", "drunk"].includes(p.panelist)).length;
+
+  if (t < T_LOOP) {
+    // ── phase A: one real record, station by station ──
+    const k = Math.min(LAPS - 1, Math.floor(t / PER_Q));
+    const within = (t - k * PER_Q) / PER_Q;      // 0..1 across five stations
+    const stage = Math.min(4, Math.floor(within * 5));
+    showQuestion(k);
+    setStations(stage, false);
+
+    const revealed = stage >= 1 ? Math.ceil(clamp(within * 5 - 1, 0, 1) * perQ) : 0;
+    revealSeals(revealed);
+    $("settleline").classList.toggle("in", stage >= 3);
+    $("scoreline").classList.toggle("in", stage >= 4);
+    markResults(stage >= 4);
+
+    const doneQ = k + (stage >= 3 ? 1 : 0);
+    counters(k + 1, k * perQ + revealed, doneQ);
+
+    $("loopstate").textContent = ["asking", "sealing", "waiting", "settling", "scoring"][stage] +
+      " · record " + (k + 1) + " of " + DATA.questions;
+    $("chainstate").textContent = "SEALED";
+
+    const upto = Math.max(2, doneQ);
+    drawGapChart(upto);
+    drawRunChart(upto);
+    gaugesAt(doneQ);
+    $("growthstate").textContent = "question " + (k + 1) + " of " + DATA.questions;
+    $("gapnote").textContent = "";
+    $("verdict").innerHTML = '<span class="muted">nothing is scored until it is settled from a source.</span>';
+    return;
+  }
+
+  if (t < T_LOOP + T_RUN) {
+    // ── phase B: the rest of the run, at speed ──
+    const u = ease(clamp((t - T_LOOP) / T_RUN, 0, 1));
+    const n = Math.round(lerp(LAPS, DATA.questions, u));
+    holdLastRecord();
+    setStations(4, true);
+    $("loopstate").textContent = "settling the rest of the run";
+    $("chainstate").textContent = "SEALED";
+
+    counters(n, n * perQ, n);
+    drawGapChart(Math.max(2, n));
+    drawRunChart(Math.max(2, n));
+
+    gaugesAt(n);
+    $("growthstate").textContent = "question " + n + " of " + DATA.questions;
+    $("gapnote").textContent = "";
+    $("verdict").innerHTML = '<span class="muted">' + n + " settled · " + (n * perQ) + " sealed forecasts graded</span>";
+    return;
+  }
+
+  // ── phase C: the verdict, held ──
+  holdLastRecord();
+  setStations(4, true);
+  $("loopstate").textContent = "the run, complete";
+  $("chainstate").textContent = DATA.intact ? "INTACT" : "BROKEN";
+  counters(DATA.questions, DATA.questions * perQ, DATA.questions);
+  drawGapChart(DATA.questions);
+  drawRunChart(DATA.questions);
+  gaugesAt(DATA.questions, true);
+  $("growthstate").textContent = "all " + DATA.questions + " questions";
+  $("gapnote").textContent =
+    "The white line is what it claimed. The yellow line is what the world paid. " +
+    DATA.questions + " questions in, they have not met.";
+  $("verdict").innerHTML =
+    '<span class="big">the most confident forecaster on the panel said <b class="num">' +
+    pct(HOG.meanConfidence) + '</b> and was right <b class="num mark">' + pct(HOG.accuracy) +
+    '</b> of the time.</span> <span class="muted">a ' + pts(HOG.gap).replace("+", "") +
+    "-point gap, across " + DATA.questions +
+    " questions sealed before their answers existed, with nothing edited after the fact.</span>";
+}
+
+let t0 = null;
+function tick(now) {
+  if (t0 === null) t0 = now;
+  frame(((now - t0) / 1000) % TOTAL);
+  requestAnimationFrame(tick);
+}
+
+if (FROZEN !== null) frame(clamp(FROZEN, 0, TOTAL - 0.01));
+else requestAnimationFrame(tick);
+</script>
