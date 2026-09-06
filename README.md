@@ -1,3 +1,11 @@
+<h1 align="center">BRIER</h1>
+
+<p align="center">
+  <b>ANYONE CAN PREDICT THE FUTURE. ALMOST NOBODY KEEPS THE RECEIPT.</b><br>
+  Seal a probability before the answer exists. Settle it from a source. Then find out what your
+  confidence was actually worth.
+</p>
+
 <p align="center">
   <img src="./assets/icon.png" alt="brier" width="104">
 </p>
