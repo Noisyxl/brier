@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 460" width="1600" height="460" role="img" aria-label="brier: a prediction ledger for language models">
+  <rect width="1600" height="460" fill="#0D1117"/>
+  <g stroke="#2E3643" stroke-width="2" fill="none"><rect x="64" y="52" width="1472" height="356" rx="6"/></g>
+
+  <text x="104" y="132" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="74" font-weight="500" letter-spacing="14" fill="#E8E3D9">brier</text>
+  <text x="110" y="178" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="24" letter-spacing="1" fill="#E8E3D9">a prediction ledger for language models</text>
+  <text x="110" y="214" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="20" letter-spacing="1" fill="#8B94A3">seal a probability before the answer exists,</text>
+  <text x="110" y="244" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="20" letter-spacing="1" fill="#8B94A3">settle it from a source, grade it properly</text>
+
+  <!-- the loop, as it actually runs -->
+  <g font-family="'JetBrains Mono', ui-monospace, monospace" font-size="17" letter-spacing="1">
+    <g fill="#0D1117" stroke="#2E3643" stroke-width="2">
+      <rect x="110" y="298" width="112" height="46" rx="4"/>
+      <rect x="262" y="298" width="112" height="46" rx="4"/>
+      <rect x="558" y="298" width="122" height="46" rx="4"/>
+      <rect x="720" y="298" width="112" height="46" rx="4"/>
+    </g>
+    <g fill="#E8E3D9" text-anchor="middle">
+      <text x="166" y="327">ask</text>
+      <text x="318" y="327">seal</text>
+      <text x="619" y="327">settle</text>
+      <text x="776" y="327">score</text>
+    </g>
+
+    <rect x="414" y="294" width="106" height="54" rx="4" fill="#E4572E"/>
+    <text x="467" y="327" fill="#0D1117" text-anchor="middle" font-weight="500">WAIT</text>
+
+    <g stroke="#8B94A3" stroke-width="2" fill="#8B94A3">
+      <path d="M 232 321 L 252 321"/><path d="M 244 315 L 254 321 L 244 327 Z"/>
+      <path d="M 384 321 L 404 321"/><path d="M 396 315 L 406 321 L 396 327 Z"/>
+      <path d="M 530 321 L 548 321"/><path d="M 540 315 L 550 321 L 540 327 Z"/>
+      <path d="M 690 321 L 710 321"/><path d="M 702 315 L 712 321 L 702 327 Z"/>
+    </g>
+  </g>
+
+  <text x="1496" y="126" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="18" letter-spacing="1" fill="#8B94A3" text-anchor="end">this repository predicts nothing</text>
+  <text x="1496" y="154" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="18" letter-spacing="1" fill="#8B94A3" text-anchor="end">it grades what a model predicted</text>
+  <text x="1496" y="352" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="18" letter-spacing="1" fill="#8B94A3" text-anchor="end">MIT · one runtime dependency · Node 20</text>
+  <text x="1496" y="380" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="18" letter-spacing="1" fill="#8B94A3" text-anchor="end">66 tests, none of them touch a network</text>
+
+  <!-- the mark, small, on the right of the loop -->
+  <g transform="translate(1180 276) scale(0.176)">
+    <rect width="512" height="512" rx="88" fill="#0D1117"/>
+    <rect x="8" y="8" width="496" height="496" rx="80" fill="none" stroke="#2E3643" stroke-width="14"/>
+    <path d="M 116 396 L 396 116" stroke="#2E3643" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="168" cy="340" r="26" fill="#E8E3D9"/>
+    <circle cx="256" cy="252" r="26" fill="#E8E3D9"/>
+    <circle cx="344" cy="300" r="30" fill="#E4572E"/>
+  </g>
+</svg>

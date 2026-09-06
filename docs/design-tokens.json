@@ -1,0 +1,53 @@
+{
+  "version": "brier-1",
+  "name": "brier",
+  "note": "A reliability diagram at night: a dark ground, bone type, and one vermilion that appears only where a forecast missed. Every value here appears verbatim in src/util/fmt.ts, assets/*.svg and assets/term2png.py — there is no second palette in the repository.",
+
+  "colors": {
+    "ground": "#0D1117",
+    "panel": "#161B22",
+    "sunk": "#1C2230",
+    "line": "#2E3643",
+    "text": "#E8E3D9",
+    "muted": "#8B94A3",
+    "accent": "#E4572E",
+    "on-accent": "#0D1117"
+  },
+
+  "chroma_rule": {
+    "statement": "Vermilion marks a miss. Being right is unmarked.",
+    "accent_is_for": [
+      "a forecast whose bin sits away from the reference line",
+      "an overconfidence gap above five points",
+      "negative skill",
+      "a refused question",
+      "the section heading of whatever you are reading"
+    ],
+    "accent_is_never_for": [
+      "a good score",
+      "a winner",
+      "emphasis",
+      "a chart series"
+    ],
+    "why": "A scoreboard coloured green for good and red for bad is read as a mood before it is read as a number, and the number is the entire point. Here the only coloured thing on the page is the place a claim did not pay."
+  },
+
+  "typography": {
+    "family": "JetBrains Mono, ui-monospace, SF Mono, Menlo, Consolas, monospace",
+    "note": "One face. Every screen in this product is a column of probabilities that has to line up.",
+    "weights": { "regular": 400, "medium": 500, "ceiling": 500 },
+    "caps": "Section labels only. Probabilities are data and are never emphasised."
+  },
+
+  "shape": {
+    "panel": "1px solid line, no radius",
+    "note": "No rounded corners, no shadows, no gradients. Depth is surface tone plus one hairline."
+  },
+
+  "marks": {
+    "observed": "● in accent",
+    "stated": "│ in line",
+    "both": "◆ in accent — the forecast told the truth",
+    "empty": "· in line"
+  }
+}

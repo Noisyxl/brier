@@ -1,0 +1,57 @@
+{
+  "name": "brier",
+  "version": "0.1.0",
+  "description": "A prediction ledger for language models. Ask a panel a question with a resolution date, seal every answer before the outcome exists, settle it from a source, and grade the probabilities with proper scoring rules. Local, open, offline by default.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "brier": "./bin/brier.js"
+  },
+  "main": "./dist/cli.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "src",
+    "prompts",
+    "README.md",
+    "LICENSE",
+    ".env.example"
+  ],
+  "scripts": {
+    "prepare": "npm run build",
+    "start": "tsx src/cli.ts",
+    "doctor": "tsx src/cli.ts doctor",
+    "demo": "tsx src/cli.ts demo",
+    "build": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "keywords": [
+    "forecasting",
+    "calibration",
+    "brier-score",
+    "proper-scoring-rules",
+    "llm-evaluation",
+    "prediction-market",
+    "overconfidence",
+    "commitment-scheme",
+    "finance",
+    "grok",
+    "claude"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Noisyxl/brier"
+  }
+}

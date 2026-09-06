@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="brier: a reliability diagram">
+  <!--
+    The mark is a reliability diagram at its smallest: the diagonal is a
+    forecast that told the truth, and the dots are where a forecaster actually
+    landed. The one that missed is the only thing with colour in it.
+    It has to read at 40 px in a list of repositories, so nothing else is in it.
+  -->
+  <rect width="512" height="512" rx="88" fill="#0D1117"/>
+  <rect x="8" y="8" width="496" height="496" rx="80" fill="none" stroke="#2E3643" stroke-width="14"/>
+
+  <!-- the reference line: stated == observed -->
+  <path d="M 116 396 L 396 116" stroke="#2E3643" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- forecasts that landed near the truth -->
+  <circle cx="168" cy="340" r="26" fill="#E8E3D9"/>
+  <circle cx="256" cy="252" r="26" fill="#E8E3D9"/>
+
+  <!-- and one that did not: said a lot, got a little -->
+  <circle cx="344" cy="300" r="30" fill="#E4572E"/>
+</svg>

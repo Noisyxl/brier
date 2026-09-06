@@ -1,0 +1,10 @@
+[1G[0K\[1G[0K
+  [38;2;228;87;46mdemo[0m  [38;2;139;148;163m200 questions · seed 1950 · almanac[0m
+
+  [38;2;139;148;163mquestions are asked in the almanac's past, before their own resolution dates, through the same validator.[0m
+  [38;2;139;148;163mnothing here is a real market and no panelist is told the answer.[0m
+
+  [38;2;139;148;163m200 asked · 200 settled · head be7a8a7d7586365f4b496ba2[0m
+
+  [38;2;139;148;163mnow run:[0m  brier score  ·  brier calibrate hedgehog  ·  brier ledger --verify
+[1G[0K\[1G[0K
