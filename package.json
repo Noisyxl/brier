@@ -51,7 +51,12 @@
     "commitment-scheme",
     "finance",
     "grok",
-    "claude"
+    "claude",
+    "robinhood-chain",
+    "onchain-timestamp",
+    "arbitrum",
+    "ethereum",
+    "l2"
   ],
   "repository": {
     "type": "git",

@@ -132,11 +132,37 @@ export interface CalibrationBin {
   observed: number;
 }
 
+/**
+ * An anchor: the ledger's head hash, written to a public chain, with the date
+ * that chain gave it.
+ *
+ * The hash chain proves the file has not been edited. This proves the file
+ * existed by a certain block, on a clock nobody here controls — which is the
+ * half a local chain cannot supply. Every field below is read back off the
+ * chain, never taken from this machine.
+ */
+export interface Anchor {
+  /** A key from `src/anchor/network.ts`. */
+  network: string;
+  chainId: number;
+  txHash: string;
+  blockNumber: number;
+  /** Seconds since epoch, out of the block header. Not this machine's clock. */
+  blockTime: number;
+  /** The 32 bytes the transaction carried. Must equal the head at `records`. */
+  head: string;
+  /** How many ledger records that head covers. */
+  records: number;
+  from: string;
+  /** A link anyone can open and check by eye. */
+  url: string;
+}
+
 /** An append-only, hash-chained record of one thing that happened. */
 export interface Entry {
   seq: number;
   at: number;
-  kind: "question.asked" | "forecast.sealed" | "question.settled" | "ledger.note";
+  kind: "question.asked" | "forecast.sealed" | "question.settled" | "anchor.published" | "ledger.note";
   body: Record<string, unknown>;
   /** sha256 over `seq|at|kind|body|prev`. */
   hash: string;

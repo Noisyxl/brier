@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { DEFAULT_NETWORK } from "./anchor/network.js";
 
 /**
  * Every knob, read once. There is no config file; everything comes from the
@@ -53,6 +54,12 @@ export interface Config {
   bases: { xai: string; anthropic: string };
   temperature: number;
   deadlineMs: number;
+  /** Which chain `brier anchor` publishes the head hash to. */
+  chain: string;
+  /** Override the network's own RPC, for a private endpoint or a fork. */
+  chainRpc: string;
+  /** The address you broadcast anchors from. Only used to write the command. */
+  chainFrom: string;
 }
 
 export function loadConfig(): Config {
@@ -70,6 +77,9 @@ export function loadConfig(): Config {
     },
     temperature: num("BRIER_TEMPERATURE", 0.3),
     deadlineMs: num("BRIER_DEADLINE_MS", 30_000),
+    chain: str("BRIER_CHAIN", DEFAULT_NETWORK),
+    chainRpc: str("BRIER_CHAIN_RPC", ""),
+    chainFrom: str("BRIER_CHAIN_FROM", ""),
   };
 }
 

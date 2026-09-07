@@ -1,4 +1,4 @@
-import type { Forecast, Question, Settlement } from "../types.js";
+import type { Anchor, Forecast, Question, Settlement } from "../types.js";
 import { Chain } from "./chain.js";
 
 /**
@@ -24,6 +24,7 @@ export class Store {
   private readonly questions = new Map<string, Question>();
   private readonly forecasts = new Map<string, Forecast[]>();
   private readonly settlements = new Map<string, Settlement>();
+  private readonly anchorsByTx = new Map<string, Anchor>();
 
   constructor(path: string) {
     this.chain = new Chain(path);
@@ -48,6 +49,11 @@ export class Store {
         case "question.settled": {
           const s = e.body.settlement as Settlement;
           this.settlements.set(s.questionId, s);
+          break;
+        }
+        case "anchor.published": {
+          const a = e.body.anchor as Anchor;
+          this.anchorsByTx.set(a.txHash, a);
           break;
         }
         default:
@@ -146,6 +152,44 @@ export class Store {
     this.settlements.set(s.questionId, s);
     this.chain.append("question.settled", { settlement: s }, s.at);
     return s;
+  }
+
+  /** Anchors already in this ledger, oldest block first. */
+  anchors(): Anchor[] {
+    return [...this.anchorsByTx.values()].sort((a, b) => a.blockNumber - b.blockNumber);
+  }
+
+  /** The most recent anchor, which is the one that dates the most records. */
+  lastAnchor(): Anchor | undefined {
+    return this.anchors().at(-1);
+  }
+
+  /**
+   * Record an anchor read back off a public chain.
+   *
+   * Two refusals, both for the same reason the rest of this file refuses things:
+   * a record that cannot be checked by someone who was not there is not worth
+   * writing. The head must be one this file actually had at that record count,
+   * and a transaction is only allowed to date the ledger once.
+   */
+  recordAnchor(a: Anchor): Anchor {
+    if (this.anchorsByTx.has(a.txHash)) {
+      throw new Error(`${a.txHash} is already in this ledger; one transaction, one anchor`);
+    }
+    const expected = this.chain.all()[a.records - 1]?.hash;
+    if (!expected) {
+      throw new Error(`that anchor covers ${a.records} records, and this ledger has ${this.chain.count}`);
+    }
+    if (expected !== a.head) {
+      throw new Error(
+        `the chain anchored ${a.head} at record ${a.records}; this file has ${expected} there`,
+      );
+    }
+
+    this.anchorsByTx.set(a.txHash, a);
+    // Dated by the block, not by this machine — the whole point of anchoring.
+    this.chain.append("anchor.published", { anchor: a }, a.blockTime * 1000);
+    return a;
   }
 
   note(text: string): void {

@@ -79,3 +79,11 @@ brier ledger --verify       # walk the chain
 brier ledger --anchor       # the string to publish
 brier pending               # what is sealed and still waiting
 ```
+
+## The half a local chain cannot do
+
+Everything above establishes that the file has not been edited. It establishes
+nothing about *when* any of it was written, because the file, the hashes and the
+clock all belong to whoever runs this. `brier anchor` puts the head hash on
+Robinhood Chain and reads the date back out of the block —
+[docs/ANCHOR.md](./ANCHOR.md).

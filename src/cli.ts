@@ -5,6 +5,9 @@ import { loadConfig, hasKey, providerFor, type Config } from "./config.js";
 import { ask, daysOut, isDue, InvalidQuestion } from "./question.js";
 import { Store } from "./ledger/store.js";
 import { anchor, verify, read as readChain } from "./ledger/chain.js";
+import { NETWORKS, networkFor, DEFAULT_NETWORK } from "./anchor/network.js";
+import { buildAnchor, readAnchor, NotAnAnchor } from "./anchor/anchor.js";
+import { RpcError } from "./anchor/rpc.js";
 import { askModel, askOffline, isOffline } from "./panel/forecaster.js";
 import { STUBS, STUB_NOTES, type StubName } from "./panel/stubs.js";
 import { settleQuestion } from "./resolve/resolver.js";
@@ -69,6 +72,15 @@ program
       process.stdout.write(`  ${muted(pad(s.key, 16))} ${pad(s.label, 26)} ${muted(`vol ${s.vol}%`)}\n`);
     }
 
+    process.stdout.write(`\n  ${mark("anchor")}\n`);
+    for (const n of NETWORKS) {
+      const on = n.key === cfg.chain;
+      process.stdout.write(
+        `  ${on ? badge("in use") : muted(pad("", 8))} ${pad(n.key, 20)} ${muted(`chain ${n.chainId} · ${n.note}`)}\n`,
+      );
+    }
+    process.stdout.write(`  ${muted("brier holds no key. It prepares the bytes; you broadcast.")}\n`);
+
     if (existsSync(cfg.ledger)) {
       const v = verify(cfg.ledger);
       const st = store(cfg);
@@ -76,6 +88,10 @@ program
       process.stdout.write(`  ${muted(pad("records", 12))} ${v.lines}\n`);
       process.stdout.write(`  ${muted(pad("questions", 12))} ${st.allQuestions().length} · ${st.settled().length} settled\n`);
       process.stdout.write(`  ${muted(pad("chain", 12))} ${v.ok ? badge("INTACT") : badge("BROKEN")} ${muted(v.head.slice(0, 24))}\n`);
+      const a = st.lastAnchor();
+      process.stdout.write(
+        `  ${muted(pad("anchored", 12))} ${a ? `${a.records} records · ${new Date(a.blockTime * 1000).toISOString().slice(0, 10)} · ${a.network}` : muted("not yet · brier anchor")}\n`,
+      );
       if (!v.ok) process.exitCode = 1;
     }
 
@@ -391,6 +407,114 @@ program
       const body = JSON.stringify(e.body);
       process.stdout.write(
         `  ${muted(lpad(String(e.seq), 5))} ${pad(e.kind, 18)} ${body.length > 96 ? body.slice(0, 93) + "…" : body}\n`,
+      );
+    }
+  });
+
+// ── anchor ───────────────────────────────────────────────────────────────────
+
+program
+  .command("anchor")
+  .description("date the ledger on a public chain: print the bytes to publish, or read one back")
+  .argument("[tx]", "a transaction hash to read back and record")
+  .option("--network <key>", `which chain (${NETWORKS.map((n) => n.key).join(" | ")})`)
+  .option("--rpc <url>", "override the network's own RPC endpoint")
+  .option("--from <address>", "the address you will broadcast from, for the command line below")
+  .option("--check", "re-read every recorded anchor from the chain and confirm it still matches")
+  .action(async (tx: string | undefined, o: { network?: string; rpc?: string; from?: string; check?: boolean }) => {
+    const cfg = loadConfig();
+    if (!existsSync(cfg.ledger)) {
+      process.stdout.write(`\n  ${muted(`no ledger at ${cfg.ledger}. brier demo, or brier ask`)}\n`);
+      return;
+    }
+
+    let net;
+    try {
+      net = networkFor(o.network ?? cfg.chain);
+    } catch (e) {
+      process.stdout.write(`\n  ${mark("refused")}  ${(e as Error).message}\n`);
+      process.exitCode = 1;
+      return;
+    }
+    const rpcUrl = o.rpc || cfg.chainRpc || net.rpc;
+    const st = store(cfg);
+    const entries = st.chain.all();
+
+    // ── re-read what is already recorded ──
+    if (o.check) {
+      const recorded = st.anchors();
+      header("anchor --check", `${recorded.length} recorded · ${net.name}`);
+      if (recorded.length === 0) {
+        process.stdout.write(`  ${muted("nothing anchored yet. brier anchor")}\n`);
+        return;
+      }
+      for (const a of recorded) {
+        try {
+          const fresh = await readAnchor(networkFor(a.network), a.txHash, entries, rpcUrl);
+          const same = fresh.head === a.head && fresh.blockNumber === a.blockNumber;
+          process.stdout.write(
+            `  ${same ? badge("MATCHES") : badge("CHANGED")} ${muted(a.txHash.slice(0, 18))} ` +
+              `${lpad(String(a.records), 6)} records · block ${a.blockNumber} · ${new Date(a.blockTime * 1000).toISOString().slice(0, 19)}Z\n`,
+          );
+          if (!same) process.exitCode = 1;
+        } catch (e) {
+          process.stdout.write(`  ${badge("UNREADABLE")} ${muted(a.txHash.slice(0, 18))} ${(e as Error).message}\n`);
+          process.exitCode = 1;
+        }
+      }
+      return;
+    }
+
+    // ── read one transaction back and record it ──
+    if (tx) {
+      header("anchor", `${net.name} · chain ${net.chainId}`);
+      try {
+        const a = await readAnchor(net, tx, entries, rpcUrl);
+        st.recordAnchor(a);
+        process.stdout.write(
+          `  ${badge("DATED")} ${a.records} records, head ${mark(a.head.slice(0, 24))}\n\n` +
+            `  ${muted(pad("block", 10))} ${a.blockNumber}\n` +
+            `  ${muted(pad("time", 10))} ${new Date(a.blockTime * 1000).toISOString()}  ${muted("(the chain's clock, not this machine's)")}\n` +
+            `  ${muted(pad("from", 10))} ${a.from}\n` +
+            `  ${muted(pad("tx", 10))} ${a.url}\n\n` +
+            `  ${muted("written into the ledger as anchor.published, and hash-chained like everything else.")}\n` +
+            `  ${muted("brier anchor --check re-reads it from the chain.")}\n`,
+        );
+      } catch (e) {
+        const why = e instanceof NotAnAnchor || e instanceof RpcError ? (e as Error).message : String(e);
+        process.stdout.write(`  ${mark("refused")}  ${why}\n`);
+        process.exitCode = 1;
+      }
+      return;
+    }
+
+    // ── prepare ──
+    const v = verify(cfg.ledger);
+    if (!v.ok) {
+      process.stdout.write(`\n  ${mark("refused")}  the chain is broken at record ${v.brokeAt}; there is nothing worth dating\n`);
+      process.exitCode = 1;
+      return;
+    }
+    const prepared = buildAnchor(v.head, v.lines);
+    const from = o.from || cfg.chainFrom || "<your address>";
+
+    header("anchor", `${net.name} · chain ${net.chainId} · gas in ${net.gas}`);
+    process.stdout.write(
+      `  ${muted(pad("head", 10))} ${v.head}\n` +
+        `  ${muted(pad("records", 10))} ${v.lines}\n` +
+        `  ${muted(pad("calldata", 10))} ${prepared.calldata}\n` +
+        `  ${muted(pad("", 10))} ${muted(`0x${"62726965"} "brie" · 32-byte head · 8-byte count`)}\n\n` +
+        `  ${muted("broadcast it yourself — brier holds no key and cannot send anything:")}\n\n` +
+        `  ${prepared.command(from).replace("<rpc>", rpcUrl)}\n\n` +
+        `  ${muted("then bring the transaction hash back:")}\n\n` +
+        `  brier anchor 0x<txhash>\n\n` +
+        `  ${muted("a zero-value transaction to your own address. No contract, no approval, nothing to sign twice.")}\n`,
+    );
+
+    const last = st.lastAnchor();
+    if (last) {
+      process.stdout.write(
+        `\n  ${muted(`last anchored ${last.records} records on ${new Date(last.blockTime * 1000).toISOString().slice(0, 10)} · ${last.url}`)}\n`,
       );
     }
   });
