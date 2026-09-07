@@ -10,7 +10,7 @@
   <img src="./assets/icon.png" alt="brier" width="104">
 </p>
 <p align="center">
-  <img src="./assets/banner.png" alt="brier: seal a probability before the answer exists, settle it from a source, grade it" width="100%">
+  <img src="./assets/banner.png" alt="brier, anchored on Robinhood Chain: seal a probability before the answer exists, settle it from a source, grade it, and date it on a public chain" width="100%">
 </p>
 
 <p align="center">
@@ -21,6 +21,11 @@
   <img alt="scoring" src="https://img.shields.io/badge/scoring-proper%20rules-E9E9E4?style=flat-square&labelColor=000000">
   <img alt="anchored on Robinhood Chain" src="https://img.shields.io/badge/anchored-Robinhood%20Chain-FFE10A?style=flat-square&labelColor=000000">
   <img alt="license" src="https://img.shields.io/badge/license-MIT-FFE10A?style=flat-square&labelColor=000000">
+</p>
+
+<p align="center">
+  <sub><b>ANCHORED ON ROBINHOOD CHAIN</b> &nbsp;·&nbsp; chain <code>4663</code> &nbsp;·&nbsp;
+  every head hash dated by a block, on a clock the forecaster does not own</sub>
 </p>
 
 <p align="center">
@@ -59,6 +64,88 @@ brier demo && brier score
 | "was it right?" | when it said 70%, how often was it true, in bins, with the reference line drawn | `calibrate` |
 | settling only the questions that went well | the ledger refuses to settle a question nobody answered | enforced |
 | a hash chain proves nothing about *when* — the author holds the file, the hashes and the clock | the head hash is written to **Robinhood Chain**, and the date comes out of the block | `anchor` |
+
+---
+
+## Anchored on Robinhood Chain
+
+> **Every forecast in this ledger can be dated by a block on Robinhood Chain —
+> not by a timestamp its own author typed.**
+
+That sentence is the reason this repository is worth anything, and it is worth
+explaining why it needed a chain at all.
+
+The hash chain in this repository proves one thing and quietly fails to prove
+another, and the source says so out loud:
+
+> *A whole file can be rewritten and rehashed by whoever holds it.*
+
+Edit one probability and every hash after it breaks — that part works. But the
+file, the hashes and the clock are all in the forecaster's hands, so a chain by
+itself cannot prove a prediction was sealed **before** the answer existed. That
+is the only claim this tool is actually for.
+
+So the head hash goes somewhere with a clock nobody here owns:
+
+```
+0x 62726965 5d3b33de…d4a1f1 00000000000004b0
+   └ "brie"  └ the chain head  └ 1200 records
+```
+
+Forty-four bytes of calldata in one zero-value transaction on **Robinhood
+Chain** — a permissionless, EVM-compatible Ethereum L2 built on Arbitrum, chain
+`4663` on mainnet and `46630` on testnet. No contract, no ABI, no token, no
+approval. Open the transaction in the explorer, delete the first ten characters,
+compare the next sixty-four with what `brier ledger --verify` prints. It works
+from a phone.
+
+| | before an anchor | after one |
+|---|---|---|
+| the file has not been edited | ✅ the hash chain | ✅ the hash chain |
+| the file existed on a given date | ❌ your word | ✅ **a block on Robinhood Chain** |
+
+| Robinhood Chain | key | chain id | rpc |
+|---|---|---|---|
+| **mainnet** | `robinhood` | `4663` | `https://rpc.mainnet.chain.robinhood.com` |
+| **testnet** | `robinhood-testnet` | `46630` | `https://rpc.testnet.chain.robinhood.com` |
+
+Testnet is the default so the example above costs nothing and anyone can repeat
+it. Mainnet is one flag: `brier anchor --network robinhood`.
+
+The chain is not a decoration bolted on the side. These questions settle against
+market readings, and Robinhood Chain is the settlement layer for tokenised
+equities — dating a forecast about that market on the ledger of that market is
+the version of this that makes sense.
+
+```sh
+brier anchor                 # the head, the calldata, and the command to send it
+brier anchor 0x<txhash>      # read it back off the chain and record it
+brier anchor --check         # re-read every anchor and confirm it still matches
+```
+
+**brier holds no private key.** It prepares the bytes and prints the command; you
+broadcast with your own wallet. `src/anchor/rpc.ts` has four methods in it and
+every one of them reads — `eth_sendRawTransaction` is not there. A tool that
+grades your forecasts has no business being able to spend your money, and the
+cheapest way to be certain is for the capability to be absent from the source.
+
+Reading an anchor back is four refusals, not a formality:
+
+- the RPC's own `eth_chainId` must be the chain it claims to be
+- the calldata must carry the `0x62726965` tag, at the right length
+- **the 32 bytes must equal the head this file actually had at record *n***. If
+  the chain says one thing and the file says another, the file is what changed
+- an unmined transaction has no date, so it is not an anchor yet
+
+And the accepted anchor is appended to the ledger and hash-chained like
+everything else — stamped with the **block's** timestamp, the only clock in the
+whole file that did not come from the author.
+
+[docs/ANCHOR.md](./docs/ANCHOR.md).
+
+<sub>brier is an independent open-source project. It is not affiliated with, endorsed by, or sponsored by
+Robinhood Markets, Inc. The Robinhood mark identifies the chain this ledger anchors to, and belongs to its
+owner.</sub>
 
 ---
 
@@ -103,70 +190,6 @@ npm run viz:video               # the recording above (needs ffmpeg)
 The two lines worth staring at are in the middle panel. The white one is the confidence the loudest
 forecaster stated; the yellow one is how often the side it took actually won. Two hundred questions in,
 they have not met.
-
----
-
-## Anchored on Robinhood Chain
-
-The hash chain in this repository proves one thing and quietly fails to prove
-another, and the source says so out loud:
-
-> *A whole file can be rewritten and rehashed by whoever holds it.*
-
-Edit one probability and every hash after it breaks — that part works. But the
-file, the hashes and the clock are all in the forecaster's hands, so a chain by
-itself cannot prove a prediction was sealed **before** the answer existed. That
-is the only claim this tool is actually for.
-
-So the head hash goes somewhere with a clock nobody here owns:
-
-```
-0x 62726965 5d3b33de…d4a1f1 00000000000004b0
-   └ "brie"  └ the chain head  └ 1200 records
-```
-
-Forty-four bytes of calldata in one zero-value transaction on **Robinhood
-Chain** — a permissionless, EVM-compatible Ethereum L2 built on Arbitrum, chain
-`4663` on mainnet and `46630` on testnet. No contract, no ABI, no token, no
-approval. Open the transaction in the explorer, delete the first ten characters,
-compare the next sixty-four with what `brier ledger --verify` prints. It works
-from a phone.
-
-| | before an anchor | after one |
-|---|---|---|
-| the file has not been edited | ✅ the hash chain | ✅ the hash chain |
-| the file existed on a given date | ❌ your word | ✅ the block |
-
-The chain is not a decoration bolted on the side. These questions settle against
-market readings, and Robinhood Chain is the settlement layer for tokenised
-equities — dating a forecast about that market on the ledger of that market is
-the version of this that makes sense.
-
-```sh
-brier anchor                 # the head, the calldata, and the command to send it
-brier anchor 0x<txhash>      # read it back off the chain and record it
-brier anchor --check         # re-read every anchor and confirm it still matches
-```
-
-**brier holds no private key.** It prepares the bytes and prints the command; you
-broadcast with your own wallet. `src/anchor/rpc.ts` has four methods in it and
-every one of them reads — `eth_sendRawTransaction` is not there. A tool that
-grades your forecasts has no business being able to spend your money, and the
-cheapest way to be certain is for the capability to be absent from the source.
-
-Reading an anchor back is four refusals, not a formality:
-
-- the RPC's own `eth_chainId` must be the chain it claims to be
-- the calldata must carry the `0x62726965` tag, at the right length
-- **the 32 bytes must equal the head this file actually had at record *n***. If
-  the chain says one thing and the file says another, the file is what changed
-- an unmined transaction has no date, so it is not an anchor yet
-
-And the accepted anchor is appended to the ledger and hash-chained like
-everything else — stamped with the **block's** timestamp, the only clock in the
-whole file that did not come from the author.
-
-[docs/ANCHOR.md](./docs/ANCHOR.md).
 
 ---
 
@@ -403,10 +426,11 @@ into 0.5, and it is not dropped from the denominator either.
 | Glenn W. Brier, *Verification of forecasts expressed in terms of probability* (1950) | the score, the name, and the default seed |
 | Allan H. Murphy, *A new vector partition of the probability score* (1973) | reliability − resolution + uncertainty |
 | Philip Tetlock, *Expert Political Judgment* | the foxes and the hedgehogs, and the finding this repository measures |
+| [Robinhood Chain](https://docs.robinhood.com/chain) | a public clock for the head hash — chain `4663`, EVM, built on Arbitrum |
 | Node 20 standard library | the hash chain, the HTTP client, the test runner |
 | [`commander`](https://github.com/tj/commander.js) | argument parsing, and the whole of the dependency list |
 
-brier is independent of xAI, Anthropic and every data source named in it. Model names appear only as
+brier is independent of xAI, Anthropic, Robinhood Markets, Inc. and every data source named in it. Model names appear only as
 configuration defaults; no marks are used and none are implied. The mark, the palette and every image in this
 README are its own — [docs/BRAND.md](./docs/BRAND.md).
 
