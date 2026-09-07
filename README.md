@@ -1,16 +1,25 @@
-<h1 align="center">BRIER</h1>
-
 <p align="center">
-  <b>ANYONE CAN PREDICT THE FUTURE. ALMOST NOBODY KEEPS THE RECEIPT.</b><br>
-  Seal a probability before the answer exists. Settle it from a source. Then find out what your
-  confidence was actually worth.
+  <img src="./assets/banner.png" alt="brier — a prediction ledger for language models, anchored on Robinhood Chain" width="100%">
 </p>
 
 <p align="center">
-  <img src="./assets/icon.png" alt="brier" width="104">
+  <b>ANYONE CAN PREDICT THE FUTURE. ALMOST NOBODY KEEPS THE RECEIPT.</b>
 </p>
+
 <p align="center">
-  <img src="./assets/banner.png" alt="brier, anchored on Robinhood Chain: seal a probability before the answer exists, settle it from a source, grade it, and date it on a public chain" width="100%">
+  <img alt="it said 91.2%" src="https://img.shields.io/badge/IT%20SAID-91.2%25-E9E9E4?style=for-the-badge&labelColor=000000">
+  <img alt="it was right 60.0% of the time" src="https://img.shields.io/badge/IT%20WAS%20RIGHT-60.0%25-E9E9E4?style=for-the-badge&labelColor=000000">
+  <img alt="overconfidence: 31.2 points" src="https://img.shields.io/badge/OVERCONFIDENT%20BY-31.2%20POINTS-FFE10A?style=for-the-badge&labelColor=000000">
+</p>
+
+<p align="center">
+  <sub>200 questions, each sealed before its answer existed, settled from a source, graded with proper
+  scoring rules.<br>Head hash dated on <b>Robinhood Chain</b> &nbsp;·&nbsp; chain <code>4663</code>
+  &nbsp;·&nbsp; every number above reproducible in four seconds, with no API key.</sub>
+</p>
+
+<p align="center">
+  <code>npx brier demo && npx brier score</code>
 </p>
 
 <p align="center">
@@ -23,16 +32,7 @@
   <img alt="license" src="https://img.shields.io/badge/license-MIT-FFE10A?style=flat-square&labelColor=000000">
 </p>
 
-<p align="center">
-  <sub><b>ANCHORED ON ROBINHOOD CHAIN</b> &nbsp;·&nbsp; chain <code>4663</code> &nbsp;·&nbsp;
-  every head hash dated by a block, on a clock the forecaster does not own</sub>
-</p>
-
-<p align="center">
-  <sub><b>predicting the future with code — and then checking.</b><br>
-  This repository does not predict anything. It writes down what a model predicted, seals it before the
-  answer exists, and grades it later.</sub>
-</p>
+---
 
 Ask a panel one question with a resolution date and the exact test that will settle it. Every answer is a
 probability, sealed into a hash chain the moment it is given. Weeks later a resolver reads one number from
