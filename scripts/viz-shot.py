@@ -17,11 +17,9 @@ PAGE = (ROOT / "assets" / "process.html").as_uri()
 OUT = ROOT / "assets"
 
 # (filename, seconds into the loop, viewport, device scale)
-#  18.3  a record mid-flight: asked, sealed, settled, scored
 #  50.0  the run complete and the verdict held
 FRAMES = [
     ("process.png", 50.0, (1600, 1200), 2),
-    ("process-loop.png", 18.3, (1600, 1200), 2),
 ]
 
 

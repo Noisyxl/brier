@@ -152,6 +152,20 @@ owner.</sub>
 ## Watch it run
 
 <p align="center">
+  <img src="./assets/live.gif" alt="the brier floor running: ask, panel, seal, wait, settle and grade, with the ledger head anchored on Robinhood Chain" width="100%">
+</p>
+
+<p align="center">
+  <sub>The floor, live. Six stations, four forecasters disagreeing with each other in real time, and the
+  ledger head anchored on <b>Robinhood Chain</b> at block 8,412,998. Full length:
+  <a href="./assets/live.mp4">assets/live.mp4</a></sub>
+</p>
+
+Nothing on that screen is waiting for a human. Questions arrive, the panel answers, the answers are sealed,
+the ledger waits, a resolver settles from a source, and the grade lands — and the head hash at the bottom
+right is the one you can go and find in a block.
+
+<p align="center">
   <img src="./assets/process.gif" alt="the brier instrument panel running: three questions walked through ask, seal, wait, settle and score, then the rest of the run settling and the verdict" width="100%">
 </p>
 
@@ -166,13 +180,6 @@ Five stations and a hash chain. A question is **asked** only if a rule can settl
 resolver **settles** it by reading one number from one source, and only then is anything **scored**.
 
 <p align="center">
-  <img src="./assets/process-loop.png" alt="one real record mid-flight: the question, four sealed probabilities with their chain links, the settlement reading, and the resulting Brier scores" width="100%">
-</p>
-
-One real record, mid-flight: the question with the test it was born with, four probabilities and the chain
-link each one actually received, the number the resolver read, and what that answer cost.
-
-<p align="center">
   <img src="./assets/process.png" alt="the panel at the end of the run: calibration gauges, the gap between stated confidence and realised accuracy, the scoreboard, and the reliability diagram" width="100%">
 </p>
 
@@ -183,7 +190,7 @@ worth looking at: **the picture cannot flatter the tool.** Rebuild all of it fro
 ```sh
 brier demo -n 200 --seed 1950   # the ledger the panel reads
 npm run viz                     # assets/viz-data.json → assets/process.html
-npm run viz:shot                # the stills above
+npm run viz:shot                # the still above
 npm run viz:video               # the recording above (needs ffmpeg)
 ```
 
