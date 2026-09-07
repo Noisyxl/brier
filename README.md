@@ -2,14 +2,30 @@
   <img src="./assets/banner.png" alt="brier — a prediction ledger for language models, anchored on Robinhood Chain" width="100%">
 </p>
 
-<p align="center">
-  <img src="./assets/hero.png" alt="brier — it said 91.2%, the world paid 60.0%: 31.2 points of overconfidence across 200 sealed questions, head hash dated on Robinhood Chain" width="100%">
-</p>
+```
+  ██████╗ ██████╗ ██╗███████╗██████╗     a prediction ledger
+  ██╔══██╗██╔══██╗██║██╔════╝██╔══██╗    for language models
+  ██████╔╝██████╔╝██║█████╗  ██████╔╝
+  ██╔══██╗██╔══██╗██║██╔══╝  ██╔══██╗    anyone can predict the future.
+  ██████╔╝██║  ██║██║███████╗██║  ██║    almost nobody keeps the receipt.
+  ╚═════╝ ╚═╝  ╚═╝╚═╝╚══════╝╚═╝  ╚═╝
+
+  ────────────────────────────────────────────────────────────────────
+
+         it said             the world paid         overconfidence
+          91.2%       →          60.0%                −31.2 pts
+
+  ────────────────────────────────────────────────────────────────────
+
+  200 questions, sealed before their answers existed · 1,200 records · 0 edited
+  head hash dated by a block on ROBINHOOD CHAIN · chain 4663 · 4s to reproduce
+```
 
 <p align="center">
-  <sub>Every figure above comes out of a settled ledger in this repository, and reproduces in four seconds
-  with no API key. The head hash is dated by a block on <b>Robinhood Chain</b>, chain <code>4663</code> —
-  a clock the forecaster does not own.</sub>
+  <b>91.2% → 60.0%</b> &nbsp;·&nbsp; that arrow is the shape of a gain, pointing the other way.<br>
+  <sub>Every figure comes out of a settled ledger in this repository and reproduces in four seconds with no
+  API key. The head hash is dated by a block on <b>Robinhood Chain</b>, chain <code>4663</code> — a clock
+  the forecaster does not own.</sub>
 </p>
 
 <p align="center">
