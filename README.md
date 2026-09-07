@@ -3,19 +3,13 @@
 </p>
 
 <p align="center">
-  <b>ANYONE CAN PREDICT THE FUTURE. ALMOST NOBODY KEEPS THE RECEIPT.</b>
+  <img src="./assets/hero.png" alt="brier — it said 91.2%, the world paid 60.0%: 31.2 points of overconfidence across 200 sealed questions, head hash dated on Robinhood Chain" width="100%">
 </p>
 
 <p align="center">
-  <img alt="it said 91.2%" src="https://img.shields.io/badge/IT%20SAID-91.2%25-E9E9E4?style=for-the-badge&labelColor=000000">
-  <img alt="it was right 60.0% of the time" src="https://img.shields.io/badge/IT%20WAS%20RIGHT-60.0%25-E9E9E4?style=for-the-badge&labelColor=000000">
-  <img alt="overconfidence: 31.2 points" src="https://img.shields.io/badge/OVERCONFIDENT%20BY-31.2%20POINTS-FFE10A?style=for-the-badge&labelColor=000000">
-</p>
-
-<p align="center">
-  <sub>200 questions, each sealed before its answer existed, settled from a source, graded with proper
-  scoring rules.<br>Head hash dated on <b>Robinhood Chain</b> &nbsp;·&nbsp; chain <code>4663</code>
-  &nbsp;·&nbsp; every number above reproducible in four seconds, with no API key.</sub>
+  <sub>Every figure above comes out of a settled ledger in this repository, and reproduces in four seconds
+  with no API key. The head hash is dated by a block on <b>Robinhood Chain</b>, chain <code>4663</code> —
+  a clock the forecaster does not own.</sub>
 </p>
 
 <p align="center">

@@ -23,9 +23,26 @@ FRAMES = [
 ]
 
 
+def hero(browser) -> None:
+    """The README hero. A fixed-size page, so it is a screenshot, not a design file."""
+    frag = (ROOT / "assets" / "hero.template.html").read_text()
+    cut = frag.index("</style>") + len("</style>")
+    doc = "<!doctype html><html><head><meta charset=utf-8>" + frag[:cut] + "</head><body>" + frag[cut:] + "</body></html>"
+    tmp = ROOT / "assets" / ".hero.build.html"
+    tmp.write_text(doc)
+    page = browser.new_page(viewport={"width": 1983, "height": 793}, device_scale_factor=1)
+    page.goto(tmp.as_uri(), wait_until="load")
+    page.wait_for_timeout(300)
+    page.screenshot(path=str(OUT / "hero.png"))
+    page.close()
+    tmp.unlink()
+    print("  hero.png  1983x793")
+
+
 def main() -> None:
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
+        hero(browser)
         for name, t, (w, h), scale in FRAMES:
             page = browser.new_page(viewport={"width": w, "height": h}, device_scale_factor=scale)
             page.goto(f"{PAGE}?t={t}", wait_until="load")

@@ -1,0 +1,141 @@
+<style>
+  @page { size: 1983px 793px; margin: 0; }
+  :root {
+    --ground: #000000;
+    --text:   #E9E9E4;
+    --muted:  #8A8A82;
+    --line:   #2C2C2C;
+    --accent: #FFE10A;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1983px; height: 793px; }
+  body {
+    background: var(--ground);
+    color: var(--text);
+    font-family: "DejaVu Sans Condensed", "DejaVu Sans", system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 62px 90px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .eyebrow {
+    font-size: 21px;
+    letter-spacing: 0.44em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .wordmark {
+    font-size: 132px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    line-height: 1;
+    margin: 20px 0 6px;
+  }
+  .wordmark .sig { font-family: "DejaVu Sans", sans-serif; margin-right: 26px; }
+
+  .claim {
+    font-size: 25px;
+    letter-spacing: 0.13em;
+    color: var(--text);
+    text-transform: uppercase;
+  }
+
+  .rule { height: 1px; background: var(--line); margin: 40px 0 34px; }
+
+  /* the arrow: the shape of a gain, pointing the other way */
+  .swing { display: flex; align-items: baseline; gap: 42px; }
+  .fig { display: flex; flex-direction: column; }
+  .fig .n {
+    font-size: 148px;
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .fig .k {
+    font-size: 20px;
+    letter-spacing: 0.24em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 18px;
+  }
+  .arrow {
+    font-size: 116px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 0.9;
+    position: relative;
+    top: -6px;
+  }
+  .miss .n { color: var(--accent); }
+
+  .verdict {
+    margin-left: auto;
+    text-align: right;
+    align-self: flex-end;
+  }
+  .verdict .n {
+    font-size: 92px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+  }
+  .verdict .k {
+    font-size: 20px;
+    letter-spacing: 0.22em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 16px;
+  }
+
+  footer {
+    margin-top: 42px;
+    border-top: 1px solid var(--line);
+    padding-top: 22px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 20px;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  footer b { color: var(--text); font-weight: 400; }
+  footer .chain { color: var(--accent); }
+</style>
+
+<div class="eyebrow">A prediction ledger for language models</div>
+
+<h1 class="wordmark"><span class="sig">Σ</span>BRIER</h1>
+
+<div class="claim">Anyone can predict the future. Almost nobody keeps the receipt.</div>
+
+<div class="rule"></div>
+
+<div class="swing">
+  <div class="fig">
+    <div class="n">91.2%</div>
+    <div class="k">what it said</div>
+  </div>
+
+  <div class="arrow">→</div>
+
+  <div class="fig miss">
+    <div class="n">60.0%</div>
+    <div class="k">what the world paid</div>
+  </div>
+
+  <div class="fig verdict">
+    <div class="n">−31.2 pts</div>
+    <div class="k">overconfidence, across 200 sealed questions</div>
+  </div>
+</div>
+
+<footer>
+  <span><b>1,200</b> sealed records &nbsp;·&nbsp; <b>0</b> edited &nbsp;·&nbsp; <b>4 s</b> to reproduce, no API key</span>
+  <span>head hash dated on <span class="chain">Robinhood Chain</span> &nbsp;·&nbsp; chain 4663</span>
+</footer>
