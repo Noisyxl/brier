@@ -91,6 +91,65 @@ brier demo && brier score
 
 ---
 
+## Four parts, and none of them trusts the others
+
+brier is not a model. It predicts nothing. It is a referee.
+
+Four pieces do the work, and each one is deliberately blind to the next:
+
+```
+  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+  │  01  GATE   │ → │  02  PANEL  │ → │ 03 RESOLVER │ → │  04  SCORER │
+  │  what counts│   │   answers   │   │   settles   │   │    grades   │
+  └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘
+     refuses a         seals a          never sees        never sees
+     question no       probability      a forecast        the resolver
+     rule can settle   before the
+                       answer exists
+```
+
+**01 · The gate — decides what counts as a question**
+
+A question gets in only if it names a date, a source, and a test that turns a number into true or false.
+
+*"Will BTC go up a lot?"* is refused — there is no number in it.
+*"BTC closes at or above 90,000 on 2026-12-31"* is accepted.
+
+**02 · The panel — answers**
+
+Four forecasters, each a different way of being wrong:
+
+| | |
+|---|---|
+| `hedgehog` | one big idea, held loudly. Says 91%, is right 60% of the time |
+| `fox` | many small updates. Careful, and it wins |
+| `parrot` | the base rate, every time. Never wrong, never useful |
+| `drunk` | pure noise. The floor everything else has to clear |
+
+Every answer is a number between 0 and 1, hash-chained the second it is given. Add your own models with
+an API key and they sit on the same board as these four.
+
+**03 · The resolver — settles**
+
+When the date arrives it reads one number from the source and applies the test.
+
+**It never sees a single forecast.** It cannot know who said what, so it cannot be nudged.
+
+**04 · The scorer — grades**
+
+It reads the sealed answers and the settled outcome, and does the arithmetic.
+
+**It never sees the resolver.** It cannot change an outcome it does not like.
+
+---
+
+That last part is the whole design. The thing that asks, the thing that answers, the thing that settles and
+the thing that grades are four separate pieces, and none of them can reach into another.
+
+That is the only reason the score means anything.
+
+---
+
 ## Anchored on Robinhood Chain
 
 > **Every forecast here can be dated by a block on Robinhood Chain — not by a
@@ -331,8 +390,9 @@ immediately. It is the quietest failure in forecast evaluation, and it is closed
 
 <p align="center"><img src="./assets/panel.png" alt="brier panel: models, four offline forecasters, and the four baselines" width="100%"></p>
 
-Four forecasters that need no key and are not models. Each one is a named failure mode. Each says so in
-every record it writes.
+These are the four from [part 02](#four-parts-and-none-of-them-trusts-the-others), in full.
+
+No key, no model. Each one is a named failure mode, and each says so in every record it writes.
 
 They exist so a calibration diagram made with no API budget still has a real shape:
 
@@ -388,6 +448,9 @@ flowchart LR
 ```
 
 Four steps, and the third one is waiting. It cannot be skipped. That is the whole reason the demo exists.
+
+This is the same [four parts](#four-parts-and-none-of-them-trusts-the-others) as above, drawn as the path a
+single question takes.
 
 Three rules are enforced in code, not asked for in a prompt. Each has a test named after it:
 
