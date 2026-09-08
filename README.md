@@ -29,10 +29,17 @@
 </p>
 
 <p align="center">
+  <a href="https://www.brier.watch/"><b>brier.watch</b></a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
   <code>npx brier demo && npx brier score</code>
 </p>
 
 <p align="center">
+  <sub>watch it run in a browser, or run it yourself in four seconds</sub>
+</p>
+
+<p align="center">
+  <a href="https://www.brier.watch/"><img alt="live at brier.watch" src="https://img.shields.io/badge/live-brier.watch-FFE10A?style=flat-square&labelColor=000000"></a>
   <img alt="tests" src="https://img.shields.io/badge/tests-86%20passing-FFE10A?style=flat-square&labelColor=000000">
   <img alt="node" src="https://img.shields.io/badge/node-%E2%89%A520-E9E9E4?style=flat-square&labelColor=000000">
   <img alt="runtime deps" src="https://img.shields.io/badge/runtime%20deps-1-E9E9E4?style=flat-square&labelColor=000000">
@@ -176,6 +183,8 @@ Nothing on that screen waits for a human. Questions arrive. The panel answers. T
 ledger waits. A resolver settles from a source. The grade lands.
 
 The head hash at the bottom right is the one you can go and find in a block.
+
+**It runs live at [brier.watch](https://www.brier.watch/)** — the same floor, moving, in your browser.
 
 <p align="center">
   <img src="./assets/process.gif" alt="the brier instrument panel running: three questions walked through ask, seal, wait, settle and score, then the rest of the run settling and the verdict" width="100%">

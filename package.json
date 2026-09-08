@@ -61,5 +61,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Noisyxl/brier"
+  },
+  "homepage": "https://www.brier.watch/",
+  "bugs": {
+    "url": "https://github.com/Noisyxl/brier/issues"
   }
 }
