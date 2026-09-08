@@ -91,11 +91,81 @@ brier demo && brier score
 
 ---
 
-## Four parts, and none of them trusts the others
+## What it actually does
 
-brier is not a model. It predicts nothing. It is a referee.
+Think of a sealed envelope.
 
-Four pieces do the work, and each one is deliberately blind to the next:
+You write down what you think will happen. You seal it. You cannot open it again. Weeks later somebody else
+opens it, checks it against the newspaper, and writes down how close you were.
+
+That is the whole tool. Everything below is the plumbing that makes it impossible to cheat.
+
+### One question, from start to finish
+
+This is a real record out of the ledger in this repository — not an illustration.
+
+---
+
+**14 September. The question is asked.**
+
+```
+VIX close closes at or below 17.00 on 2026-09-28
+```
+
+The gate checks four things. Is there a date? `2026-09-28`. A source? `vix.close`. A test that gives a
+straight yes or no? `lte 17`. Is the date in the future? Yes.
+
+It passes. It gets an id built from those parts: `q-2026-09-28-9b128f`.
+
+Change one word of that question later and the id changes with it — so it becomes a different question, with
+nobody's forecast attached. You see that immediately.
+
+**Still 14 September. Four answers, sealed.**
+
+```
+  hedgehog    8.9%   "the whole thing turns on one factor, and it points no"   ⛓ 8268d561
+  fox        42.0%   "several small things lean no; none decides it"           ⛓ bcd7d652
+  parrot     76.9%   "the base rate for this class of question is 77%"         ⛓ e54d7f71
+  drunk      39.8%   "no reason"                                               ⛓ 1ff226b6
+```
+
+`hedgehog` says 8.9%. Read that as: **"I am 91% sure this will not happen."**
+
+Each answer gets a chain link the second it is written. Edit any one of those numbers afterwards and every
+link after it stops matching, and `brier ledger --verify` names the exact line.
+
+**15 to 27 September. Nothing happens.**
+
+This is the step nobody likes and nobody can skip. A forecast is only worth reading if it existed before the
+answer did, so there has to be a gap. Two weeks of it, here.
+
+**28 September. The resolver settles it.**
+
+It reads `vix.close` on that date and gets `16.2`. Applies the test: is `16.2 ≤ 17`? Yes.
+
+**The answer is TRUE.**
+
+The resolver has not seen a single one of those four forecasts. It does not know who said what, so there is
+nothing to lean on.
+
+**28 September. The scorer grades.**
+
+```
+  parrot     0.0534   held      said 76.9%, and it happened
+  fox        0.3364   missed
+  drunk      0.3629   missed
+  hedgehog   0.8294   missed    said it was 91% not happening. It happened.
+```
+
+Lower is better. 0 is perfect, 0.25 is a coin, 1 is being certain and wrong.
+
+The scorer never sees the resolver. It gets the sealed answers and the settled outcome, and does arithmetic.
+
+**The forecaster that just repeated the base rate won. The confident one lost by a mile.**
+
+Do that two hundred times and you get the number at the top of this page.
+
+### The four parts
 
 ```
   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
@@ -108,16 +178,14 @@ Four pieces do the work, and each one is deliberately blind to the next:
                        answer exists
 ```
 
-**01 · The gate — decides what counts as a question**
+| | Its one job | What it is not allowed to do |
+|---|---|---|
+| **01 · Gate** | decide what counts as a question | let through anything a rule cannot settle |
+| **02 · Panel** | answer with a number, and seal it | change an answer once it is written |
+| **03 · Resolver** | read the source, apply the test | see any forecast |
+| **04 · Scorer** | grade the sealed answers | see or touch the resolver |
 
-A question gets in only if it names a date, a source, and a test that turns a number into true or false.
-
-*"Will BTC go up a lot?"* is refused — there is no number in it.
-*"BTC closes at or above 90,000 on 2026-12-31"* is accepted.
-
-**02 · The panel — answers**
-
-Four forecasters, each a different way of being wrong:
+The panel is four forecasters, each a different way of being wrong:
 
 | | |
 |---|---|
@@ -126,27 +194,20 @@ Four forecasters, each a different way of being wrong:
 | `parrot` | the base rate, every time. Never wrong, never useful |
 | `drunk` | pure noise. The floor everything else has to clear |
 
-Every answer is a number between 0 and 1, hash-chained the second it is given. Add your own models with
-an API key and they sit on the same board as these four.
-
-**03 · The resolver — settles**
-
-When the date arrives it reads one number from the source and applies the test.
-
-**It never sees a single forecast.** It cannot know who said what, so it cannot be nudged.
-
-**04 · The scorer — grades**
-
-It reads the sealed answers and the settled outcome, and does the arithmetic.
-
-**It never sees the resolver.** It cannot change an outcome it does not like.
+Put an API key in `.env` and your models sit on the same board as these four, judged the same way.
 
 ---
 
-That last part is the whole design. The thing that asks, the thing that answers, the thing that settles and
-the thing that grades are four separate pieces, and none of them can reach into another.
+**Why split it into four?** Because every way of cheating at forecasting is one of these parts reaching into
+another.
 
-That is the only reason the score means anything.
+Deciding what the question meant *after* you see the answer — the gate closed that. Changing your number
+once you know — the seal closed that. Picking a source that gives the answer you want — the resolver never
+sees your answer, so it has nothing to aim at. Grading only the ones that went well — the scorer cannot
+choose what to settle.
+
+Four parts that cannot reach each other is not a design detail. **It is the only reason the score means
+anything.**
 
 ---
 
@@ -390,7 +451,7 @@ immediately. It is the quietest failure in forecast evaluation, and it is closed
 
 <p align="center"><img src="./assets/panel.png" alt="brier panel: models, four offline forecasters, and the four baselines" width="100%"></p>
 
-These are the four from [part 02](#four-parts-and-none-of-them-trusts-the-others), in full.
+These are the four from [part 02](#the-four-parts), in full.
 
 No key, no model. Each one is a named failure mode, and each says so in every record it writes.
 
@@ -449,7 +510,7 @@ flowchart LR
 
 Four steps, and the third one is waiting. It cannot be skipped. That is the whole reason the demo exists.
 
-This is the same [four parts](#four-parts-and-none-of-them-trusts-the-others) as above, drawn as the path a
+This is the same [four parts](#the-four-parts) as above, drawn as the path a
 single question takes.
 
 Three rules are enforced in code, not asked for in a prompt. Each has a test named after it:
