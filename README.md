@@ -13,7 +13,7 @@
   ────────────────────────────────────────────────────────────────────
 
 
-          50$       →          750$              2 days
+          200 questions   ·   0 edited   ·   the parrot wins
 
   ────────────────────────────────────────────────────────────────────
 
@@ -673,9 +673,11 @@ brier is a free, open-source tool: a forecast ledger you can open in Obsidian as
 wiki, with the parrot setting the bar every model has to beat. It doesn't need a token and
 doesn't use one.
 
-If you come across a token with the same name on Robinhood Chain, it lives separately
-from this code: it gives no rights, no features and no share of fees (fees go to the
+The token with the same name on Robinhood Chain lives separately from this code: it gives no rights, no features and no share of fees (fees go to the
 launch wallet).
+
+Contract on Robinhood Chain (4663):
+`0x1CcCf881AC6d696d1670356E8A43761530A99639`
 
 Please don't treat it as an investment. Crypto is risky, so only put in what you'd be
 fine losing. Not financial advice.
