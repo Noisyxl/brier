@@ -617,3 +617,18 @@ and every image in this README are its own — [docs/BRAND.md](./docs/BRAND.md).
 ## License
 
 MIT. Seal it before you know, or it does not count.
+
+---
+
+## Token
+
+brier is a free, open-source tool. It doesn't need a token and doesn't use one.
+
+If you come across a token with the same name on Robinhood Chain, it lives separately
+from this code: it gives no rights, no features and no share of fees (fees go to the
+launch wallet).
+
+Please don't treat it as an investment. Crypto is risky, so only put in what you'd be
+fine losing. Not financial advice.
+
+brier is not affiliated with Robinhood Markets, Inc.
