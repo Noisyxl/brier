@@ -69,6 +69,12 @@ With no argument, every panelist in turn.
 | `--anchor` | print the head hash and the sentence to publish with it |
 | `--tail <n>` | the last n records (default 15) |
 
+## `brier wiki [dir]`
+
+Compile the ledger into an Obsidian vault at `dir` (default `./vault`): `index.md`, `log.md`, `AGENTS.md`, one
+page per question in `questions/` and one per panelist in `panelists/`. Rebuilt from the ledger on every run.
+`notes/` is created once and never written to again. Refuses a non-empty folder it did not make.
+
 ## `brier panel`
 
 Who answers, what each offline forecaster is, and what the baselines do.

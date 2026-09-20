@@ -16,6 +16,7 @@ import { SERIES } from "./resolve/almanac.js";
 import { grade, scorecard } from "./score/brier.js";
 import { gradeBaselines } from "./score/baseline.js";
 import { diagram, ece } from "./score/calibrate.js";
+import { buildVault, writeVault } from "./wiki/obsidian.js";
 import type { Graded, Question, ResolverKind } from "./types.js";
 import { badge, lpad, mark, muted, pad, pp, rule, sc, signed } from "./util/fmt.js";
 
@@ -576,6 +577,27 @@ program
 
     process.stdout.write(`  ${muted(`${set.length} asked · ${settled} settled · head ${st.chain.head.slice(0, 24)}`)}\n`);
     process.stdout.write(`\n  ${muted("now run:")}  brier score  ·  brier calibrate hedgehog  ·  brier ledger --verify\n`);
+  });
+
+// ── wiki ─────────────────────────────────────────────────────────────────────
+
+program
+  .command("wiki [dir]")
+  .description("compile the ledger into an Obsidian vault: one page per question and per panelist, all linked")
+  .action((dir: string | undefined) => {
+    const cfg = loadConfig();
+    if (!existsSync(cfg.ledger)) {
+      process.stdout.write(`\n  ${muted(`no ledger at ${cfg.ledger}. brier demo, or brier ask`)}\n`);
+      return;
+    }
+    const st = store(cfg);
+    const out = dir ?? "./vault";
+    const files = buildVault(st, cfg.bins);
+    const { written } = writeVault(out, files);
+
+    header("wiki", `${written} pages · ${out}`);
+    process.stdout.write(`  ${muted("open the folder as a vault in Obsidian. start at index.md; the graph view shows who answered what.")}\n`);
+    process.stdout.write(`  ${muted("pages are rebuilt from the ledger on every run. write your own analysis in notes/ — brier never touches it.")}\n`);
   });
 
 // ── panel ────────────────────────────────────────────────────────────────────

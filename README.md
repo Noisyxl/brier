@@ -492,6 +492,48 @@ The timestamp comes from there, and the chain proves the file has not moved sinc
 
 ---
 
+## wiki
+
+```
+$ brier wiki ./vault
+
+  wiki  67 pages · ./vault
+```
+
+Open `./vault` in [Obsidian](https://obsidian.md) and the ledger becomes something you can walk around in.
+Every question is a page with each sealed forecast, the reason given for it, and what happened. Every
+panelist is a page with its score, its calibration table, its five worst calls and every call it ever made.
+It is all linked, so the graph view shows who answered what, and backlinks answer "what else did the
+hedgehog say about the 10-year yield?" in one click.
+
+```
+| panelist                        | kind         | settled | brier  | skill  |
+| [[panelists/parrot|parrot]]     | offline rule | 60      | 0.2175 | +0.0%  |
+| base                            | baseline     | 60      | 0.2175 | +0.0%  |
+| [[panelists/fox|fox]]           | offline rule | 60      | 0.2441 | -12.2% |
+| coin                            | baseline     | 60      | 0.2500 | -14.9% |
+| [[panelists/drunk|drunk]]       | offline rule | 60      | 0.2678 | -23.1% |
+| [[panelists/hedgehog|hedgehog]] | offline rule | 60      | 0.3188 | -46.6% |
+```
+
+<sub>The scoreboard at the top of `index.md`, after `brier demo`. Seed 1950; run it and you get these numbers.</sub>
+
+The layout is Andrej Karpathy's **LLM wiki**: plain interlinked markdown over the raw record, an `index.md`,
+a `log.md`, and an `AGENTS.md` that tells a model how the pages are organised. Point Claude, Codex or any
+agent at the folder and it can help analyse the panel: who is overconfident, on which questions, and whether
+anyone beats the parrot.
+
+Two differences from a wiki a model writes, and they are the point. **The pages are compiled, not
+written**: every number comes out of the ledger through the same code as `brier score`, and the same ledger
+always gives the same bytes. **The ledger stays the record**: edit a page and the next `brier wiki` puts it
+back; nothing in the vault is ever read into the ledger. Your own analysis, and your agent's, goes in
+`notes/`, which brier creates once and never touches again.
+
+brier will not write into a folder that already has files it did not make, so pointing it at your real
+vault by mistake costs nothing.
+
+---
+
 ## How it works
 
 ```mermaid
@@ -555,7 +597,7 @@ your panel on it. Measured by you, on questions you wrote, checkable by anyone h
 npm test
 ```
 
-Eighty-six checks. None touch a network — including the chain ones, which run against a stubbed RPC that
+Ninety-four checks. None touch a network — including the chain ones, which run against a stubbed RPC that
 answers exactly what the test says and nothing else.
 
 What they cover:
@@ -571,6 +613,8 @@ What they cover:
 - that an anchor on the wrong chain, an anchor carrying a head this file never had, and a second anchor from
   the same transaction are each refused, with a different reason for each
 - a whole demo ledger, end to end, twice, from the same seed — proving the run is reproducible
+- that the Obsidian vault has no link to a page that does not exist, shows no outcome on an open question,
+  compiles to the same bytes twice, and refuses a folder it did not make
 
 ## FAQ
 
@@ -607,10 +651,13 @@ denominator either.
 | Allan H. Murphy, *A new vector partition of the probability score* (1973) | reliability − resolution + uncertainty |
 | Philip Tetlock, *Expert Political Judgment* | the foxes and the hedgehogs, and the finding this repository measures |
 | [Robinhood Chain](https://docs.robinhood.com/chain) | a public clock for the head hash — chain `4663`, EVM, built on Arbitrum |
+| Andrej Karpathy, the *LLM wiki* pattern | the shape of `brier wiki`: markdown over the raw record, `index.md`, `log.md`, `AGENTS.md` |
+| [Obsidian](https://obsidian.md) | the reader for that vault. brier writes plain markdown; nothing in it needs Obsidian to open |
 | Node 20 standard library | the hash chain, the HTTP client, the test runner |
 | [`commander`](https://github.com/tj/commander.js) | argument parsing, and the whole of the dependency list |
 
-brier is independent of xAI, Anthropic, Robinhood Markets, Inc. and every data source named in it. Model
+brier is independent of xAI, Anthropic, Obsidian, Robinhood Markets, Inc., Andrej Karpathy and every source
+named in it. Model
 names appear only as configuration defaults. No marks are used and none are implied. The mark, the palette
 and every image in this README are its own — [docs/BRAND.md](./docs/BRAND.md).
 
@@ -622,7 +669,9 @@ MIT. Seal it before you know, or it does not count.
 
 ## Token
 
-brier is a free, open-source tool. It doesn't need a token and doesn't use one.
+brier is a free, open-source tool: a forecast ledger you can open in Obsidian as a linked
+wiki, with the parrot setting the bar every model has to beat. It doesn't need a token and
+doesn't use one.
 
 If you come across a token with the same name on Robinhood Chain, it lives separately
 from this code: it gives no rights, no features and no share of fees (fees go to the
@@ -631,4 +680,4 @@ launch wallet).
 Please don't treat it as an investment. Crypto is risky, so only put in what you'd be
 fine losing. Not financial advice.
 
-brier is not affiliated with Robinhood Markets, Inc.
+brier is not affiliated with Robinhood Markets, Inc. or Obsidian.
