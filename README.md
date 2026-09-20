@@ -290,35 +290,35 @@ owner.</sub>
 ## Watch it run
 
 <p align="center">
-  <img src="./assets/live.gif" alt="the brier floor running: ask, panel, seal, wait, settle and grade, with the ledger head anchored on Robinhood Chain" width="100%">
+  <img src="./assets/floor.gif" alt="the brier floor: questions arrive, the panel answers, answers are sealed, wait, settle from a source, and the grade lands; misses light up in yellow" width="100%">
 </p>
 
 <p align="center">
-  <sub>The floor, live. Six stations, four forecasters disagreeing with each other, and the ledger head
-  anchored on <b>Robinhood Chain</b> at block 8,412,998. Full length:
-  <a href="./assets/live.mp4">assets/live.mp4</a></sub>
+  <sub><b>The floor.</b> Two hundred questions through ask, seal, wait, settle and grade. Yellow is a miss.
+  Full length: <a href="./assets/floor.mp4">assets/floor.mp4</a></sub>
 </p>
 
 Nothing on that screen waits for a human. Questions arrive. The panel answers. The answers are sealed. The
 ledger waits. A resolver settles from a source. The grade lands.
 
-The head hash at the bottom right is the one you can go and find in a block.
+The floor is an animation of the loop: its question cards are short labels, not the demo's questions, and
+its counters are drawn for the film. The run you can reproduce to the digit is the race below.
 
 **It runs live at [brier.watch](https://www.brier.watch/)** — the same floor, moving, in your browser.
 
 <p align="center">
-  <img src="./assets/process.gif" alt="the brier instrument panel running: three questions walked through ask, seal, wait, settle and score, then the rest of the run settling and the verdict" width="100%">
+  <img src="./assets/race.gif" alt="the race: running mean Brier score of each forecaster across 200 questions; parrot finishes first at 0.2105, hedgehog near the bottom at 0.3342" width="100%">
 </p>
 
 <p align="center">
-  <sub>Three records through the loop, then two hundred. Full length:
-  <a href="./assets/process.mp4">assets/process.mp4</a> &middot; the page itself:
-  <a href="./assets/process.html">assets/process.html</a></sub>
+  <sub><b>The race.</b> Running mean Brier per forecaster over two hundred questions. Lower is better.
+  Full length: <a href="./assets/race.mp4">assets/race.mp4</a></sub>
 </p>
 
-Five stations. A question is **asked** only if a rule can settle it. Every answer is **sealed** before the
-answer exists. The ledger **waits** — that step cannot be skipped. A resolver **settles** it from one
-number in one source. Only then is anything **scored**.
+The finishing order is the seed-1950 demo, the same numbers as the scoreboard further down:
+`parrot` 0.2105, `fox` 0.2476, `coin` 0.2500, `drunk` 0.3246, `hedgehog` 0.3342, `always-yes` 0.4901.
+The one with no opinion wins. The loudest one, which said 91% and was right 60% of the time, is beaten by
+pure noise.
 
 <p align="center">
   <img src="./assets/process.png" alt="the panel at the end of the run: calibration gauges, the gap between stated confidence and realised accuracy, the scoreboard, and the reliability diagram" width="100%">
