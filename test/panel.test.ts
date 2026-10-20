@@ -154,6 +154,13 @@ test("a missing csv row is an error, never a zero", () => {
   assert.throws(() => readCsv(`${file}#nope@2026-12-01`), /no "nope" column/);
 });
 
+test("an empty csv cell is an error, never a zero", () => {
+  const file = scratch("bars.csv");
+  writeFileSync(file, "date,close,volume\n2026-12-01,,100\n2026-12-02,199.0\n");
+  assert.throws(() => readCsv(`${file}#close@2026-12-01`), /cell is empty/);
+  assert.throws(() => readCsv(`${file}#volume@2026-12-02`), /cell is empty/);
+});
+
 test("a manual settlement without a source is refused", () => {
   const manual = ask({
     text: "The reported CPI print is at or below 3.0 percent on 2026-12-10",

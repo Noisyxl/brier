@@ -61,7 +61,10 @@ export function readCsv(spec: string): Reading {
   for (let i = 1; i < lines.length; i++) {
     const cells = lines[i]!.split(",");
     if ((cells[iDate] ?? "").trim() !== date) continue;
-    const value = Number((cells[iCol] ?? "").trim());
+    const cell = (cells[iCol] ?? "").trim();
+    // Number("") is 0, so an empty cell has to be refused before it is converted.
+    if (cell === "") throw new Error(`${file} row ${date}: the "${column}" cell is empty`);
+    const value = Number(cell);
     if (!Number.isFinite(value)) throw new Error(`${file} row ${date}: "${cells[iCol]}" is not a number`);
     return { value, source: `${file}#${column}@${date}` };
   }
