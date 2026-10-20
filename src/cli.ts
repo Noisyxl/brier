@@ -451,7 +451,11 @@ program
       }
       for (const a of recorded) {
         try {
-          const fresh = await readAnchor(networkFor(a.network), a.txHash, entries, rpcUrl);
+          // Each anchor is re-read on the chain it was recorded on. The --rpc /
+          // BRIER_CHAIN_RPC override belongs to the selected network only.
+          const anchored = networkFor(a.network);
+          const url = anchored.key === net.key ? rpcUrl : anchored.rpc;
+          const fresh = await readAnchor(anchored, a.txHash, entries, url);
           const same = fresh.head === a.head && fresh.blockNumber === a.blockNumber;
           process.stdout.write(
             `  ${same ? badge("MATCHES") : badge("CHANGED")} ${muted(a.txHash.slice(0, 18))} ` +
